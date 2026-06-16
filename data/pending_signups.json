@@ -1,0 +1,20 @@
+{
+  "mafavuke": {
+    "name": "LWANDISWA CWELE",
+    "org": "Research Unlimited",
+    "email": "lwandiswacwele4@gmail.com",
+    "password": "Impisi.mafavuke_1317",
+    "role": "user",
+    "approved": true,
+    "created": "2026-06-08 16:37:43"
+  },
+  "carol": {
+    "name": "Mandisa",
+    "org": "UJ",
+    "email": "sisandacarol@gmail.com",
+    "password": "MandisaKhumalo_1317",
+    "role": "user",
+    "approved": true,
+    "created": "2026-06-08 20:01:38"
+  }
+}
