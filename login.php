@@ -2,7 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (isset($_SESSION['role'])) { header('Location: /csi-hub/dashboard.php'); exit; }
 
-$admin_accounts = ['admin' => ['password'=>'RU@admin2026','name'=>'Admin User']];
+$_root_pw_file = __DIR__ . '/data/root_password.json';
+$_root_pw      = file_exists($_root_pw_file)
+    ? (json_decode(file_get_contents($_root_pw_file), true)['password'] ?? 'RU@admin2026')
+    : 'RU@admin2026';
+$admin_accounts = ['admin' => ['password' => $_root_pw, 'name' => 'Admin User']];
 $admins_file = __DIR__ . '/data/admin_users.json';
 if (file_exists($admins_file)) {
     $saved = json_decode(file_get_contents($admins_file), true) ?? [];
@@ -26,9 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form']??'') === 'login') {
     $approved = array_filter($pending, fn($v) => ($v['approved']??false));
     if (isset($approved[$u]) && $approved[$u]['password'] === $p) {
         session_regenerate_id(true);
-        $_SESSION['role']='user'; $_SESSION['name']=$approved[$u]['name'];
-        $_SESSION['username']=$u; $_SESSION['org']=$approved[$u]['org']??'';
-        $_SESSION['login_time']=time();
+        $_SESSION['role']      = 'user';
+        $_SESSION['name']      = $approved[$u]['name'];
+        $_SESSION['username']  = $u;
+        $_SESSION['org']       = $approved[$u]['org'] ?? '';
+        $_SESSION['user_type'] = $approved[$u]['user_type'] ?? 'general';
+        $_SESSION['linked_id'] = $approved[$u]['linked_id'] ?? null;
+        $_SESSION['login_time']= time();
         header('Location: /csi-hub/dashboard.php'); exit;
     }
     $error = isset($pending[$u]) && !($pending[$u]['approved']??false)

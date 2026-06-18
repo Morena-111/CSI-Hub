@@ -11,7 +11,7 @@ $success_msg = '';
 $error_msg   = '';
 
 // ── HANDLE UPLOAD ────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'upload') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'upload' && !is_admin()) {
     $file = $_FILES['document'] ?? null;
 
     if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
@@ -142,7 +142,15 @@ $file_icons = [
       <h1>Documents</h1>
       <p>MOUs, reports, proposals and programme files</p>
     </div>
-    <button class="btn btn-primary" onclick="openModal('upload-modal')"><i class="ti ti-upload"></i> Upload Document</button>
+    <?php if(!is_admin()): ?>
+    <button class="btn btn-primary" onclick="openModal('upload-modal')">
+      <i class="ti ti-upload"></i> Upload Document
+    </button>
+    <?php else: ?>
+    <div style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-soft);border:1px solid #a7e9d3;border-radius:9px;padding:8px 16px;font-size:12.5px;font-weight:600;color:#00956a">
+      <i class="ti ti-eye" style="font-size:15px"></i> Review Mode — users submit documents here
+    </div>
+    <?php endif; ?>
   </div>
 
   <!-- STATS -->
@@ -190,9 +198,11 @@ $file_icons = [
   <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
     <i class="ti ti-files" style="font-size:48px;opacity:.3;display:block;margin-bottom:12px"></i>
     <p style="font-size:14px">No documents yet.</p>
+      <?php if(!is_admin()): ?>
       <button class="btn btn-primary" style="margin-top:14px" onclick="openModal('upload-modal')">
         <i class="ti ti-upload"></i> Upload your first document
       </button>
+      <?php endif; ?>
   </div>
   <?php else: ?>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
@@ -262,6 +272,7 @@ $file_icons = [
 </div>
 
 <!-- UPLOAD MODAL -->
+<?php if(!is_admin()): ?>
 <div class="modal-overlay" id="upload-modal" onclick="if(event.target.id==='upload-modal')closeModal('upload-modal')">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('upload-modal')"><i class="ti ti-x"></i></button>
@@ -336,6 +347,7 @@ $file_icons = [
     </form>
   </div>
 </div>
+<?php endif; // end non-admin upload modal ?>
 
 <script>
 function openModal(id)  { document.getElementById(id).classList.add('open'); }

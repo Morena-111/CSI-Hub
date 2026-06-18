@@ -2,98 +2,815 @@
 /**
  * header.php
  */
-
 if (session_status() === PHP_SESSION_NONE) session_start();
-
-if (!isset($_SESSION['role'])) {
-    header('Location: /csi-hub/login.php');
-    exit;
-}
-
-if (!function_exists('is_admin')) {
-    require_once __DIR__ . '/auth.php';
-}
+if (!isset($_SESSION['role'])) { header('Location: /csi-hub/login.php'); exit; }
+if (!function_exists('is_admin')) { require_once __DIR__ . '/auth.php'; }
 
 $_hn_name     = $_SESSION['name'] ?? 'User';
-$_hn_role     = is_admin() ? 'Administrator' : 'User';
-$_hn_parts    = explode(' ', trim($_hn_name));
-$_hn_initials = strtoupper(substr($_hn_parts[0],0,1).(isset($_hn_parts[1]) ? substr($_hn_parts[1],0,1) : ''));
+$_hn_initials = current_user_initials();
+$_hn_utype    = $_SESSION['user_type'] ?? 'general';
 
+// ── NOTIFICATIONS (all types) ─────────────────────────────────
+$_notifs = [];
+try {
+    // Expiring partnerships
+    $exp = $pdo->query("
+        SELECT p.end_date, c.name AS co, s.name AS sc,
+               DATEDIFF(p.end_date,CURDATE()) AS days
+        FROM partnerships p
+        JOIN companies c ON c.id=p.company_id
+        JOIN schools   s ON s.id=p.school_id
+        WHERE p.status='active'
+          AND p.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 30 DAY)
+        ORDER BY p.end_date ASC LIMIT 10
+    ")->fetchAll();
+    foreach ($exp as $e) {
+        $_notifs[] = [
+            'icon'=>'ti-clock','color'=>'#b7791f','bg'=>'#fffbea',
+            'text'=>"{$e['co']} → {$e['sc']} expires in {$e['days']} day".($e['days']!=1?'s':''),
+            'link'=>'partnerships.php','time'=>'Partnership'
+        ];
+    }
+    // New partnerships (last 7 days)
+    $new_p = $pdo->query("
+        SELECT p.created_at, c.name AS co, s.name AS sc
+        FROM partnerships p
+        JOIN companies c ON c.id=p.company_id
+        JOIN schools   s ON s.id=p.school_id
+        WHERE p.created_at >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+        ORDER BY p.created_at DESC LIMIT 5
+    ")->fetchAll();
+    foreach ($new_p as $n) {
+        $_notifs[] = [
+            'icon'=>'ti-plus','color'=>'#00956a','bg'=>'#e6faf5',
+            'text'=>"New partnership: {$n['co']} → {$n['sc']}",
+            'link'=>'partnerships.php','time'=>date('d M', strtotime($n['created_at']))
+        ];
+    }
+    // New documents (last 7 days)
+    $new_d = $pdo->query("
+        SELECT title, uploaded_by, created_at FROM documents
+        WHERE created_at >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+        ORDER BY created_at DESC LIMIT 5
+    ")->fetchAll();
+    foreach ($new_d as $d) {
+        $_notifs[] = [
+            'icon'=>'ti-file-invoice','color'=>'#6c5ce7','bg'=>'#f0eeff',
+            'text'=>"Document uploaded: {$d['title']} by {$d['uploaded_by']}",
+            'link'=>'documents.php','time'=>date('d M', strtotime($d['created_at']))
+        ];
+    }
+    // Upcoming events (next 3 days)
+    $ev = $pdo->query("
+        SELECT title, event_date FROM events
+        WHERE status='upcoming'
+          AND event_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 3 DAY)
+        ORDER BY event_date ASC LIMIT 5
+    ")->fetchAll();
+    foreach ($ev as $e) {
+        $days = ceil((strtotime($e['event_date'])-time())/86400);
+        $_notifs[] = [
+            'icon'=>'ti-calendar','color'=>'#E8541A','bg'=>'#fdf0ea',
+            'text'=>"Event: {$e['title']} in {$days} day".($days!=1?'s':''),
+            'link'=>'events.php','time'=>date('d M', strtotime($e['event_date']))
+        ];
+    }
+    // Pending approvals (admin only)
+    if (is_admin()) {
+        $sp = __DIR__ . '/../data/pending_signups.json';
+        if (file_exists($sp)) {
+            $pd = json_decode(file_get_contents($sp), true) ?? [];
+            $pu = array_filter($pd, fn($v) => !($v['approved']??false));
+            if (count($pu) > 0) {
+                $_notifs[] = [
+                    'icon'=>'ti-user-check','color'=>'#4c63d2','bg'=>'#eef2ff',
+                    'text'=>count($pu).' user access request'.(count($pu)!=1?'s':'').' awaiting approval',
+                    'link'=>'team.php','time'=>'Admin'
+                ];
+            }
+        }
+    }
+    // New impact stats (last 7 days)
+    $ni = $pdo->query("
+        SELECT i.created_at, c.name AS co, s.name AS sc
+        FROM impact_stats i
+        JOIN partnerships p ON p.id=i.partnership_id
+        JOIN companies c ON c.id=p.company_id
+        JOIN schools   s ON s.id=p.school_id
+        WHERE i.created_at >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+        ORDER BY i.created_at DESC LIMIT 3
+    ")->fetchAll();
+    foreach ($ni as $n) {
+        $_notifs[] = [
+            'icon'=>'ti-heart-rate-monitor','color'=>'#00c48c','bg'=>'#e6faf5',
+            'text'=>"Impact record added: {$n['co']} → {$n['sc']}",
+            'link'=>'impact_stats.php','time'=>date('d M', strtotime($n['created_at']))
+        ];
+    }
+} catch(Exception $e) { $_notifs = []; }
 
-if (!isset($active_page)) $active_page = '';
-
-$nav_tabs = [
-    'dashboard'    => ['icon'=>'ti-layout-dashboard','label'=>'Dashboard',    'href'=>'dashboard.php'],
-    'partnerships' => ['icon'=>'ti-users',            'label'=>'Partnerships', 'href'=>'partnerships.php'],
-    'companies'    => ['icon'=>'ti-building',         'label'=>'Companies',    'href'=>'companies.php'],
-    'schools'      => ['icon'=>'ti-school',           'label'=>'Schools',      'href'=>'schools.php'],
-    'reports'      => ['icon'=>'ti-chart-bar',        'label'=>'Reports',      'href'=>'reports.php'],
-];
+$_notif_count = count($_notifs);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSI Hub — <?= ucfirst($active_page ?: 'Home') ?> | Research Unlimited</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-  <link rel="stylesheet" href="assets/css/main.css">
-  <link rel="stylesheet" href="assets/css/sidebar.css">
-  <link rel="stylesheet" href="assets/css/cards.css">
-  <link rel="stylesheet" href="assets/css/modal.css">
-  <link rel="stylesheet" href="assets/css/tables.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CSI Hub | Research Unlimited</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/modal.css">
+<style>
+/* ══════════════════════════════════════════════════
+   CSI Hub — Core Styles (embedded in header.php)
+   Consistent with original dashboard look
+══════════════════════════════════════════════════ */
+:root{
+  --orange:#E8541A; --orange-h:#c94514; --orange-soft:#fdf0ea;
+  --teal:#00c48c;   --teal-h:#00a077;   --teal-soft:#e6faf5;
+  --navy:#0d1e3d;   --navy2:#162848;
+  --purple:#6c5ce7; --purple-soft:#f0eeff;
+  --gold:#f5a623;   --gold-soft:#fffbea;
+  --white:#ffffff;  --surface:#f6f7fb;  --bg:#f0f2f7;
+  --border:#e8edf5; --text:#1a1f2e;
+  --text-muted:#6b7a99; --text-light:#a0aec0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text)}
+img{max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* ── TOP NAV ─────────────────────────────────────
+   Redesigned: seamless full-width white bar,
+   orange accent bar on top, no sidebar divider.
+──────────────────────────────────────────────── */
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:64px;
+  background:var(--white);
+  /* subtle shadow instead of hard border */
+  box-shadow:0 2px 12px rgba(26,31,46,.07);
+  display:flex;align-items:center;
+  /* NO border-bottom */
+}
+/* Orange + teal gradient line at very top */
+.topnav-accent-bar{
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--orange) 0%,var(--orange-mid) 40%,var(--teal) 100%);
+  pointer-events:none;
+}
+/* Left logo area — NO right border, seamless */
+.topnav-left{
+  width:240px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 20px;
+  height:100%;
+  /* NO border-right */
+}
+.topnav-logo-link{
+  display:flex;align-items:center;justify-content:center;
+  height:100%;
+}
+.topnav-logo{
+  height:46px;
+  width:auto;
+  display:block;
+  object-fit:contain;
+  max-width:200px;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+/* Centre: search + M&E */
+.topnav-centre{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  gap:10px;padding:0 20px;
+}
+/* Global search */
+.topnav-search-wrap{
+  position:relative;flex:1;max-width:460px;
+}
+.topnav-search-icon{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:15px;color:var(--text-light);pointer-events:none;
+}
+.topnav-search{
+  width:100%;padding:10px 16px 10px 38px;
+  border:1.5px solid var(--border);border-radius:24px;
+  font-size:13px;font-family:'Poppins',sans-serif;
+  color:var(--text);background:var(--surface);outline:none;
+  transition:all .2s;
+}
+.topnav-search:focus{
+  border-color:var(--orange);background:var(--white);
+  box-shadow:0 0 0 4px rgba(232,84,26,.09);
+  border-radius:14px;
+}
+.topnav-search-results{
+  display:none;
+  position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:var(--white);border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 8px 24px rgba(26,31,46,.12);
+  z-index:200;max-height:320px;overflow-y:auto;
+}
+.topnav-search-results.visible{display:block}
+.search-result-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .12s;text-decoration:none;
+}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{background:var(--surface)}
+.search-result-icon{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+}
+.search-result-text{flex:1;min-width:0}
+.search-result-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.search-result-type{font-size:11px;color:var(--text-muted)}
+.search-result-empty{padding:18px 16px;text-align:center;font-size:12.5px;color:var(--text-muted)}
+/* M&E link */
+.topnav-me-link{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;color:var(--navy);
+  padding:9px 20px;border-radius:24px;
+  border:1.5px solid var(--border);
+  background:var(--white);white-space:nowrap;
+  transition:all .2s;flex-shrink:0;
+  letter-spacing:.01em;
+}
+.topnav-me-link i{font-size:16px;color:var(--orange)}
+.topnav-me-link:hover{
+  background:var(--orange);
+  border-color:var(--orange);
+  color:var(--white);
+}
+.topnav-me-link:hover i{color:var(--white)}
+
+
+/* Right icons */
+.topnav-right{
+  display:flex;align-items:center;gap:6px;
+  padding:0 20px;
+}
+.topnav-icon-btn{
+  width:38px;height:38px;border-radius:10px;
+  border:none;background:transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;color:var(--text-muted);
+  transition:all .15s;position:relative;text-decoration:none;
+}
+.topnav-icon-btn:hover{background:var(--surface);color:var(--text)}
+.topnav-badge{
+  position:absolute;top:3px;right:3px;
+  min-width:16px;height:16px;border-radius:8px;
+  background:var(--orange);color:#fff;
+  font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 3px;
+}
+.topnav-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--orange),var(--orange-mid));
+  color:#fff;
+  font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  letter-spacing:.02em;
+  box-shadow:0 2px 8px rgba(232,84,26,.35);
+}
+.topnav-signout:hover{background:#fde9e9;color:#c53030}
+
+/* Notification panel */
+.topnav-notif-wrap{position:relative}
+.notif-panel{
+  display:none;
+  position:absolute;top:calc(100% + 8px);right:0;
+  width:340px;
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:0 8px 32px rgba(26,31,46,.12);
+  z-index:300;overflow:hidden;
+}
+.notif-panel.open{display:block}
+.notif-panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;font-weight:700;color:var(--text);
+}
+.notif-count{font-size:11px;font-weight:400;color:var(--text-muted)}
+.notif-list{max-height:340px;overflow-y:auto}
+.notif-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  transition:background .12s;
+}
+.notif-item:hover{background:var(--surface)}
+.notif-icon{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.notif-body{flex:1;min-width:0}
+.notif-text{font-size:12px;color:var(--text);line-height:1.45}
+.notif-time{font-size:10.5px;color:var(--text-muted);margin-top:2px}
+.notif-empty{text-align:center;padding:28px 16px;color:var(--text-muted)}
+.notif-empty i{font-size:28px;opacity:.25;display:block;margin-bottom:8px}
+.notif-empty p{font-size:12.5px}
+.notif-panel-foot{
+  padding:10px 16px;text-align:center;
+  font-size:12px;border-top:1px solid var(--border);
+}
+.notif-panel-foot a{color:var(--orange);font-weight:600}
+
+/* ── SIDEBAR ─────────────────────────────────────
+   Fixed left, starts below topnav (top:56px).
+   240px wide. White bg with right border.
+──────────────────────────────────────────────── */
+.sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--white);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:64px;left:0;
+  height:calc(100vh - 64px);
+  overflow-y:auto;z-index:50;
+  /* subtle right shadow instead of hard border */
+  border-right:none;
+  box-shadow:2px 0 12px rgba(26,31,46,.06);
+}
+
+/* Sidebar brand — logo + CSI Hub + platform label */
+.sidebar-brand{
+  display:flex;align-items:center;gap:11px;
+  padding:15px 16px 13px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo{
+  height:32px;width:auto;
+  object-fit:contain;flex-shrink:0;
+  /* Hard cap so it can never overflow */
+  max-width:40px;
+}
+.sidebar-brand-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.sidebar-brand-name{
+  font-size:13px;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sidebar-brand-sub{
+  font-size:9px;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.08em;margin-top:1px;
+}
+
+/* Nav sections */
+.sidebar-nav{flex:1;padding:6px 0}
+.sidebar-section{margin-bottom:2px}
+.sidebar-section-label{
+  display:block;
+  font-size:9.5px;font-weight:700;
+  color:var(--text-light);
+  text-transform:uppercase;letter-spacing:.1em;
+  padding:14px 16px 5px;
+}
+.sidebar-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 16px;
+  font-size:13px;font-weight:500;
+  color:var(--text-muted);
+  transition:all .12s;
+  text-decoration:none;position:relative;
+}
+.sidebar-item i{font-size:16px;flex-shrink:0}
+.sidebar-item span{flex:1}
+.sidebar-item:hover{background:var(--surface);color:var(--text)}
+.sidebar-item.active{
+  background:var(--orange-soft);
+  color:var(--orange);
+  font-weight:700;
+}
+.sidebar-item.active::after{
+  content:'';position:absolute;right:0;top:0;bottom:0;
+  width:3px;background:var(--orange);border-radius:2px 0 0 2px;
+}
+.sidebar-badge{
+  background:var(--orange);color:#fff;
+  font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:10px;
+  flex-shrink:0;
+}
+
+/* Sidebar user block — bottom */
+.sidebar-user{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  margin-top:auto;
+}
+.sidebar-user-avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:var(--orange);color:#fff;
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.sidebar-user-info{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;line-height:1.3;
+}
+.sidebar-user-name{
+  font-size:12px;font-weight:600;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sidebar-user-role{font-size:10px;color:var(--text-muted)}
+.sidebar-logout{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--text-muted);
+  transition:all .12s;text-decoration:none;
+}
+.sidebar-logout:hover{background:#fde9e9;color:#c53030}
+
+/* ── LAYOUT ──────────────────────────────────────
+   .layout wraps sidebar + main content.
+   Sidebar is fixed so main needs left margin.
+──────────────────────────────────────────────── */
+.layout{
+  display:flex;
+  min-height:calc(100vh - 64px);
+  margin-top:64px;
+}
+.main{
+  flex:1;
+  min-width:0;
+  padding:28px 32px;
+  margin-left:240px;
+  overflow-y:auto;
+}
+
+/* ── PAGE STRUCTURE ──────────────────────────── */
+.page-banner{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--text-muted);
+  margin-bottom:16px;
+}
+.page-banner i{font-size:13px}
+.active-crumb{color:var(--orange);font-weight:600}
+.page-header{
+  display:flex;align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:22px;flex-wrap:wrap;gap:12px;
+}
+.page-header h1{
+  font-family:'Playfair Display',serif;
+  font-size:26px;font-weight:700;
+  color:var(--text);margin-bottom:3px;
+  line-height:1.2;
+}
+.page-header p{font-size:13px;color:var(--text-muted);line-height:1.5}
+.page-header-right{
+  display:flex;align-items:center;
+  gap:10px;flex-wrap:wrap;
+}
+
+/* ── BUTTONS ─────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:9px;
+  border:none;cursor:pointer;
+  font-size:13px;font-weight:600;
+  font-family:'Poppins',sans-serif;
+  transition:all .15s;white-space:nowrap;
+  line-height:1;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:scale(.98)}
+.btn i{font-size:15px}
+.btn-primary  {background:var(--orange);color:#fff}
+.btn-primary:hover{background:var(--orange-h)}
+.btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--surface)}
+.btn-teal {background:var(--teal);color:#fff}
+.btn-teal:hover{background:var(--teal-h)}
+.btn-navy {background:var(--navy);color:#fff}
+.btn-navy:hover{background:var(--navy2)}
+.btn-locked{opacity:.5;cursor:not-allowed}
+.btn-locked:hover{transform:none}
+
+/* ── STAT CARDS ──────────────────────────────── */
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(175px,1fr));
+  gap:14px;margin-bottom:22px;
+}
+.stat-card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:12px;padding:16px 18px;
+  border-left:4px solid var(--border);
+}
+.stat-card.orange{border-left-color:var(--orange)}
+.stat-card.teal  {border-left-color:var(--teal)}
+.stat-card.purple{border-left-color:var(--purple)}
+.stat-card.gold  {border-left-color:var(--gold)}
+.stat-label{
+  font-size:10.5px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+}
+.stat-value{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:700;color:var(--text);
+  line-height:1;margin-bottom:4px;
+}
+.stat-value.orange{color:var(--orange)}
+.stat-value.teal  {color:var(--teal)}
+.stat-value.purple{color:var(--purple)}
+.stat-sub{font-size:11.5px;color:var(--text-muted)}
+
+/* ── WIDGETS ─────────────────────────────────── */
+.widget{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:12px;padding:18px 20px;margin-bottom:18px;
+}
+.widget-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:14px;
+}
+.widget-title i{font-size:16px;color:var(--orange)}
+
+/* ── DATA TABLES ─────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{
+  background:var(--surface);color:var(--text-muted);
+  font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.05em;
+  padding:9px 12px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.data-table td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;color:var(--text);
+}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface)}
+.cell-name{font-weight:600}
+
+/* ── STATUS BADGES ───────────────────────────── */
+.status-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;
+}
+.status-badge.active   {background:var(--teal-soft);color:#00956a}
+.status-badge.pending  {background:var(--gold-soft);color:#9a6700}
+.status-badge.completed{background:var(--surface);color:var(--text-muted)}
+.status-badge.paused,
+.status-badge.inactive {background:#fde9e9;color:#c53030}
+.status-badge.draft    {background:var(--surface);color:var(--text-muted)}
+.status-badge.closed   {background:var(--surface);color:var(--text-light)}
+
+/* ── TABLE ACTION BUTTONS ────────────────────── */
+.table-action-btn{
+  width:30px;height:30px;border-radius:7px;
+  border:1px solid var(--border);background:var(--white);
+  cursor:pointer;font-size:14px;color:var(--text-muted);
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .12s;
+}
+.table-action-btn:hover{background:var(--surface);color:var(--text)}
+.btn-danger-icon:hover{background:#fde9e9;color:#c53030;border-color:#f5c0c0}
+
+/* ── FORMS ───────────────────────────────────── */
+.form-group {margin-bottom:14px}
+.form-row   {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-label {
+  display:block;font-size:11px;font-weight:600;
+  color:var(--text);margin-bottom:6px;
+}
+.form-input,.form-select{
+  width:100%;padding:10px 12px;
+  border:1.5px solid var(--border);border-radius:9px;
+  font-size:13px;font-family:'Poppins',sans-serif;
+  color:var(--text);background:var(--surface);outline:none;
+  transition:all .15s;
+}
+.form-input:focus,.form-select:focus{
+  border-color:var(--orange);background:var(--white);
+  box-shadow:0 0 0 3px var(--orange-soft);
+}
+textarea.form-input{resize:vertical;min-height:80px}
+.filter-input{
+  padding:8px 12px 8px 34px;
+  border:1.5px solid var(--border);border-radius:9px;
+  font-size:13px;font-family:'Poppins',sans-serif;
+  color:var(--text);background:var(--white);outline:none;
+  width:220px;transition:all .15s;
+}
+.filter-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-soft)}
+.search-wrap{position:relative;display:inline-block}
+.search-wrap>i{
+  position:absolute;left:10px;top:50%;
+  transform:translateY(-50%);
+  color:var(--text-light);font-size:15px;pointer-events:none;
+}
+
+/* ── PROGRESS ────────────────────────────────── */
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.progress-fill{height:100%;background:var(--orange);border-radius:3px;transition:width .3s}
+
+/* ── CARDS GRID ──────────────────────────────── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pcard{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:all .15s}
+.pcard:hover{box-shadow:0 4px 16px rgba(26,31,46,.08);transform:translateY(-2px)}
+
+/* ── ADMIN BADGE ─────────────────────────────── */
+.admin-badge{display:inline-flex;align-items:center;gap:5px;background:var(--orange-soft);color:var(--orange);font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:20px}
+
+/* ── TOAST ───────────────────────────────────── */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:var(--navy);color:#fff;
+  padding:12px 18px;border-radius:10px;
+  display:none;align-items:center;gap:10px;
+  font-size:13px;font-weight:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
+.toast.show{display:flex}
+
+/* ── SETTINGS PAGE ───────────────────────────── */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.settings-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.settings-card-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
+.settings-card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.settings-card-icon.orange{background:var(--orange-soft);color:var(--orange)}
+.settings-card-icon.teal  {background:var(--teal-soft);  color:var(--teal)}
+.settings-card-icon.purple{background:var(--purple-soft);color:var(--purple)}
+.settings-card-icon.gold  {background:var(--gold-soft);  color:var(--gold)}
+.settings-card-title{font-size:14px;font-weight:700;color:var(--text)}
+.settings-card-sub  {font-size:12px;color:var(--text-muted);margin-top:2px}
+.settings-card-body {padding:18px 20px}
+
+/* ── MODAL ───────────────────────────────────── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(13,30,61,.45);
+  z-index:1000;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--white);border-radius:16px;
+  padding:28px 30px;width:100%;max-width:480px;
+  max-height:90vh;overflow-y:auto;
+  position:relative;
+  box-shadow:0 20px 60px rgba(13,30,61,.22);
+  animation:mpop .18s ease;
+}
+@keyframes mpop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  background:var(--surface);border:none;border-radius:8px;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text-muted);font-size:16px;transition:all .15s;
+}
+.modal-close:hover{background:var(--border);color:var(--text)}
+.modal-actions{
+  display:flex;justify-content:flex-end;gap:10px;
+  margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
+}
+</style>
 </head>
 <body>
 
+<!-- TOP NAV -->
 <nav class="topnav">
 
-  <!-- Logo -->
-  <div class="topnav-brand">
-    <img src="assets/img/logo.png" alt="Research Unlimited" class="topnav-logo-img">
-    <div class="ru-text">
-      <span class="ru-name">Research Unlimited</span>
-      <span class="ru-sub">CSI Hub</span>
-    </div>
+  <!-- Left: Logo on white background -->
+  <div class="topnav-left">
+    <a href="dashboard.php" style="display:flex;align-items:center;height:100%">
+      <img src="assets/img/logo.png" alt="Research Unlimited" class="topnav-logo">
+    </a>
   </div>
 
-  <!-- Nav tabs: Dashboard, Partnerships, Companies, Schools, Reports -->
-  <div class="topnav-tabs">
-    <?php foreach ($nav_tabs as $key => $tab): ?>
-      <a href="<?= $tab['href'] ?>"
-         class="topnav-tab <?= $active_page === $key ? 'active' : '' ?>">
-        <i class="ti <?= $tab['icon'] ?>"></i>
-        <?= $tab['label'] ?>
-      </a>
-    <?php endforeach; ?>
+  <!-- Centre: M&E link only -->
+  <div class="topnav-centre">
+    <a href="programmes.php" class="topnav-me-link">
+      <i class="ti ti-activity"></i>
+      Monitoring &amp; Evaluation (M&amp;E)
+    </a>
   </div>
 
-  <!-- Right: bell + role badge + user + logout -->
+  <!-- Right: notifications + user icon + sign out only -->
   <div class="topnav-right">
 
-    <button class="topnav-icon-btn" title="Notifications">
-      <i class="ti ti-bell"></i>
-      <span class="notif-dot"></span>
-    </button>
+    <!-- Notification bell -->
+    <div class="topnav-notif-wrap" id="notif-wrap">
+      <button class="topnav-icon-btn" id="notif-btn" onclick="toggleNotif()" title="Notifications">
+        <i class="ti ti-bell"></i>
+        <?php if ($_notif_count > 0): ?>
+        <span class="topnav-badge"><?= $_notif_count ?></span>
+        <?php endif; ?>
+      </button>
 
-    <?php if (is_admin()): ?>
-      <span class="role-badge admin-role"><i class="ti ti-shield-check"></i> Admin</span>
-    <?php else: ?>
-      <span class="role-badge viewer-role"><i class="ti ti-eye"></i> User</span>
-    <?php endif; ?>
-
-    <div class="topnav-user">
-      <div class="topnav-avatar"><?= $_hn_initials ?></div>
-      <div class="topnav-user-info">
-        <span class="topnav-user-name"><?= htmlspecialchars($_hn_name) ?></span>
-        <span class="topnav-user-role"><?= htmlspecialchars($_hn_role) ?></span>
+      <!-- Dropdown -->
+      <div class="notif-panel" id="notif-panel">
+        <div class="notif-panel-head">
+          <span>Notifications</span>
+          <span class="notif-count"><?= $_notif_count ?> update<?= $_notif_count!=1?'s':'' ?></span>
+        </div>
+        <?php if (empty($_notifs)): ?>
+        <div class="notif-empty">
+          <i class="ti ti-bell-off"></i>
+          <p>No new updates</p>
+        </div>
+        <?php else: ?>
+        <div class="notif-list">
+          <?php foreach ($_notifs as $n): ?>
+          <a href="<?= $n['link'] ?>" class="notif-item">
+            <div class="notif-icon" style="background:<?= $n['bg'] ?>;color:<?= $n['color'] ?>">
+              <i class="ti <?= $n['icon'] ?>"></i>
+            </div>
+            <div class="notif-body">
+              <div class="notif-text"><?= htmlspecialchars($n['text']) ?></div>
+              <div class="notif-time"><?= htmlspecialchars($n['time']) ?></div>
+            </div>
+          </a>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        <div class="notif-panel-foot">
+          <a href="dashboard.php">View dashboard →</a>
+        </div>
       </div>
     </div>
 
-    <a href="logout.php" class="topnav-logout" title="Log out">
+    <!-- User icon → edit profile -->
+    <a href="profile.php" class="topnav-icon-btn topnav-user-btn" title="Edit your profile">
+      <span class="topnav-avatar"><?= $_hn_initials ?></span>
+    </a>
+
+    <!-- Sign out -->
+    <a href="logout.php" class="topnav-icon-btn topnav-signout" title="Sign out">
       <i class="ti ti-logout"></i>
     </a>
 
   </div>
 </nav>
+
+<script>
+function toggleNotif() {
+  const p = document.getElementById('notif-panel');
+  p.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('notif-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('notif-panel').classList.remove('open');
+  }
+  // Close search if clicking outside
+  const sw = document.querySelector('.topnav-search-wrap');
+  if (sw && !sw.contains(e.target)) hideResults();
+});
+
+// ── GLOBAL SEARCH ───────────────────────────────────────────
+let _st = null;
+function globalSearch(q) {
+  clearTimeout(_st);
+  const box = document.getElementById('search-results');
+  if (!q || q.length < 2) { box.innerHTML=''; box.classList.remove('visible'); return; }
+  _st = setTimeout(() => {
+    fetch('search.php?q=' + encodeURIComponent(q))
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) {
+          box.innerHTML = '<div class="search-result-empty">No results for "' + escHtml(q) + '"</div>';
+        } else {
+          box.innerHTML = data.map(r => `
+            <a href="${r.url}" class="search-result-item">
+              <div class="search-result-icon" style="background:${r.bg};color:${r.color}">
+                <i class="ti ${r.icon}"></i>
+              </div>
+              <div class="search-result-text">
+                <div class="search-result-name">${escHtml(r.name)}</div>
+                <div class="search-result-type">${escHtml(r.type)}</div>
+              </div>
+            </a>`).join('');
+        }
+        box.classList.add('visible');
+      })
+      .catch(() => { box.innerHTML=''; box.classList.remove('visible'); });
+  }, 220);
+}
+function showResults() {
+  const q = document.getElementById('global-search').value;
+  if (q && q.length >= 2) document.getElementById('search-results').classList.add('visible');
+}
+function hideResults() {
+  document.getElementById('search-results').classList.remove('visible');
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>

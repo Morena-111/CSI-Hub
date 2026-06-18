@@ -249,13 +249,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'remove_
           <td><?= htmlspecialchars($u['org'] ?? '—') ?></td>
           <td style="font-size:12.5px;color:var(--text-muted)"><?= htmlspecialchars($u['email'] ?? '—') ?></td>
           <td style="font-size:12px;color:var(--text-muted)"><?= htmlspecialchars($u['created'] ?? '—') ?></td>
-          <td>
-            <form method="POST" action="approve_user.php" style="display:flex;gap:6px">
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-primary" style="font-size:11.5px;padding:5px 12px"
+                    onclick="openApprove('<?= htmlspecialchars($uname,ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($u['name']??$uname),ENT_QUOTES) ?>')">
+              <i class="ti ti-check"></i> Approve
+            </button>
+            <form method="POST" action="approve_user.php" style="display:inline">
               <input type="hidden" name="username" value="<?= htmlspecialchars($uname) ?>">
-              <button type="submit" name="action" value="approve" class="btn btn-primary" style="font-size:11.5px;padding:5px 12px">
-                <i class="ti ti-check"></i> Approve
-              </button>
-              <button type="submit" name="action" value="reject" class="btn btn-secondary" style="font-size:11.5px;padding:5px 12px;color:#c53030;border-color:#fed7d7">
+              <input type="hidden" name="action" value="reject">
+              <button type="submit" class="btn btn-secondary" style="font-size:11.5px;padding:5px 12px;color:#c53030;border-color:#fed7d7"
+                      onclick="return confirm('Reject this request?')">
                 <i class="ti ti-x"></i> Reject
               </button>
             </form>
@@ -448,6 +451,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'remove_
   </div>
 </div>
 
+<!-- APPROVE USER MODAL -->
+<div class="modal-overlay" id="approve-modal" onclick="if(event.target.id==='approve-modal')closeModal('approve-modal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('approve-modal')"><i class="ti ti-x"></i></button>
+    <h2>Approve User Access</h2>
+    <div class="modal-sub">Set this user's type so they only see relevant data.</div>
+    <form method="POST" action="approve_user.php">
+      <input type="hidden" name="action" value="approve">
+      <input type="hidden" name="username" id="approve-uname">
+      <div class="form-group">
+        <label class="form-label">User</label>
+        <input class="form-input" type="text" id="approve-name-display" disabled style="background:var(--surface)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">User Type *</label>
+        <select class="form-select" name="user_type" id="approve-type" onchange="loadLinked(this.value)">
+          <option value="general">General (view all data)</option>
+          <option value="company">Partner / Company</option>
+          <option value="school">School</option>
+        </select>
+      </div>
+      <div class="form-group" id="linked-wrap" style="display:none">
+        <label class="form-label">Link to specific record</label>
+        <select class="form-select" name="linked_id" id="linked-select">
+          <option value="">Loading…</option>
+        </select>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+          This user will only see data for the selected <?= '<?= document.getElementById("approve-type")?.value === "school" ? "school" : "partner" ?>' ?>.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('approve-modal')">Cancel</button>
+        <button type="submit" class="btn btn-teal"><i class="ti ti-check"></i> Approve Access</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -472,6 +513,29 @@ function openEditUser(uname, u) {
   document.getElementById('eu-org').value = u.org || '';
   document.getElementById('eu-email').value = u.email || '';
   openModal('edit-user-modal');
+}
+function openApprove(uname, displayName) {
+  document.getElementById('approve-uname').value = uname;
+  document.getElementById('approve-name-display').value = displayName + ' (@' + uname + ')';
+  document.getElementById('approve-type').value = 'general';
+  document.getElementById('linked-wrap').style.display = 'none';
+  openModal('approve-modal');
+}
+function loadLinked(type) {
+  const wrap = document.getElementById('linked-wrap');
+  const sel  = document.getElementById('linked-select');
+  if (type === 'general') { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  sel.innerHTML = '<option value="">Loading…</option>';
+  fetch('get_linked_options.php?type=' + type)
+    .then(r => r.json())
+    .then(data => {
+      sel.innerHTML = '<option value="">-- No specific link (sees all) --</option>';
+      data.forEach(item => {
+        sel.innerHTML += '<option value="'+item.id+'">'+item.name+'</option>';
+      });
+    })
+    .catch(() => { sel.innerHTML = '<option value="">Error loading options</option>'; });
 }
 </script>
 
