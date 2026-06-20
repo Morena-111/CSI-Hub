@@ -10,7 +10,7 @@ if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
 $success_msg = '';
 $error_msg   = '';
 
-// ── HANDLE UPLOAD ────────────────────────────────────────────
+// ── HANDLE UPLOAD ───────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'upload' && !is_admin()) {
     $file = $_FILES['document'] ?? null;
 

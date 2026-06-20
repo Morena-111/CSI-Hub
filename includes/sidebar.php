@@ -1,6 +1,7 @@
 <?php
 /**
  * sidebar.php
+ * Place in: C:\xampp\htdocs\csi-hub\includes\sidebar.php
  */
 
 // Determine user type label
@@ -56,11 +57,11 @@ if (is_admin()) {
 ?>
 <aside class="sidebar">
 
-  <!-- Brand -->
+  <!-- Brand — text only, logo lives in header -->
   <div class="sidebar-brand">
     <div class="sidebar-brand-text">
       <span class="sidebar-brand-name">CSI Hub</span>
-      <span class="sidebar-brand-sub">Coordination Platform</span>
+      <span class="sidebar-brand-sub"><?= htmlspecialchars($_sb_platform) ?></span>
     </div>
   </div>
 

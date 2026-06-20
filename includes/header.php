@@ -1,6 +1,7 @@
 <?php
 /**
  * header.php
+ * Place in: C:\xampp\htdocs\csi-hub\includes\header.php
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['role'])) { header('Location: /csi-hub/login.php'); exit; }
@@ -141,78 +142,92 @@ html,body{height:100%;font-family:'Poppins',sans-serif;background:var(--bg);colo
 img{max-width:100%}
 a{text-decoration:none;color:inherit}
 
-/* ── TOP NAV ─────────────────────────────────────
-   Redesigned: seamless full-width white bar,
-   orange accent bar on top, no sidebar divider.
-──────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   TOP NAV — Dark navy, professional CSI look
+══════════════════════════════════════════════ */
 .topnav{
   position:fixed;top:0;left:0;right:0;z-index:100;
-  height:64px;
+  height:66px;
   background:var(--white);
-  /* subtle shadow instead of hard border */
-  box-shadow:0 2px 12px rgba(26,31,46,.07);
   display:flex;align-items:center;
-  /* NO border-bottom */
+  box-shadow:0 2px 18px rgba(13,30,61,.08);
+  position:relative;
 }
-/* Orange + teal gradient line at very top */
-.topnav-accent-bar{
-  position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--orange) 0%,var(--orange-mid) 40%,var(--teal) 100%);
-  pointer-events:none;
+/* gradient accent line along the bottom — brand identity */
+.topnav::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--orange) 0%,var(--orange-mid) 35%,var(--teal) 100%);
 }
-/* Left logo area — NO right border, seamless */
+
+/* Left: logo zone on dark nav — no border, kept visually separate from sidebar below */
 .topnav-left{
   width:240px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   padding:0 20px;
   height:100%;
-  /* NO border-right */
+  position:relative;z-index:2;
 }
 .topnav-logo-link{
-  display:flex;align-items:center;justify-content:center;
+  display:flex;align-items:center;gap:10px;
   height:100%;
+  transition:transform .2s;
+}
+.topnav-logo-link:hover{transform:scale(1.02)}
+.topnav-logo-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.topnav-logo-name{
+  font-size:13.5px;font-weight:700;color:var(--text);
+  white-space:nowrap;letter-spacing:-.01em;
+}
+.topnav-logo-tag{
+  font-size:9.5px;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.06em;
+  white-space:nowrap;
 }
 .topnav-logo{
-  height:46px;
-  width:auto;
-  display:block;
-  object-fit:contain;
-  max-width:200px;
-  filter:none !important;
-  opacity:1 !important;
+  height:38px;width:auto;
+  object-fit:contain;display:block;
+  flex-shrink:0;
 }
 
-/* Centre: search + M&E */
+/* Centre: search */
 .topnav-centre{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  gap:10px;padding:0 20px;
+  flex:1;display:flex;align-items:center;
+  justify-content:center;padding:0 24px;
+  position:relative;z-index:2;
 }
-/* Global search */
 .topnav-search-wrap{
-  position:relative;flex:1;max-width:460px;
+  position:relative;width:100%;max-width:440px;
 }
 .topnav-search-icon{
-  position:absolute;left:12px;top:50%;transform:translateY(-50%);
-  font-size:15px;color:var(--text-light);pointer-events:none;
+  position:absolute;left:13px;top:50%;
+  transform:translateY(-50%);
+  font-size:15px;color:var(--text-light);
+  pointer-events:none;
 }
 .topnav-search{
-  width:100%;padding:10px 16px 10px 38px;
-  border:1.5px solid var(--border);border-radius:24px;
+  width:100%;padding:10px 16px 10px 40px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
   font-size:13px;font-family:'Poppins',sans-serif;
-  color:var(--text);background:var(--surface);outline:none;
-  transition:all .2s;
+  color:var(--text);
+  background:var(--surface);
+  outline:none;transition:all .2s;
 }
+.topnav-search::placeholder{color:var(--text-light)}
 .topnav-search:focus{
-  border-color:var(--orange);background:var(--white);
-  box-shadow:0 0 0 4px rgba(232,84,26,.09);
-  border-radius:14px;
+  border-color:var(--orange);
+  background:var(--white);
+  box-shadow:0 0 0 4px var(--orange-soft);
 }
 .topnav-search-results{
   display:none;
-  position:absolute;top:calc(100% + 6px);left:0;right:0;
-  background:var(--white);border:1px solid var(--border);
-  border-radius:12px;box-shadow:0 8px 24px rgba(26,31,46,.12);
-  z-index:200;max-height:320px;overflow-y:auto;
+  position:absolute;top:calc(100% + 8px);left:0;right:0;
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 8px 32px rgba(13,30,61,.2);
+  z-index:300;max-height:320px;overflow-y:auto;
 }
 .topnav-search-results.visible{display:block}
 .search-result-item{
@@ -229,84 +244,134 @@ a{text-decoration:none;color:inherit}
 .search-result-text{flex:1;min-width:0}
 .search-result-name{font-size:12.5px;font-weight:600;color:var(--text)}
 .search-result-type{font-size:11px;color:var(--text-muted)}
-.search-result-empty{padding:18px 16px;text-align:center;font-size:12.5px;color:var(--text-muted)}
-/* M&E link */
-.topnav-me-link{
-  display:inline-flex;align-items:center;gap:8px;
-  font-size:13px;font-weight:600;color:var(--navy);
-  padding:9px 20px;border-radius:24px;
-  border:1.5px solid var(--border);
-  background:var(--white);white-space:nowrap;
-  transition:all .2s;flex-shrink:0;
-  letter-spacing:.01em;
-}
-.topnav-me-link i{font-size:16px;color:var(--orange)}
-.topnav-me-link:hover{
-  background:var(--orange);
-  border-color:var(--orange);
-  color:var(--white);
-}
-.topnav-me-link:hover i{color:var(--white)}
+.search-result-empty{padding:18px;text-align:center;font-size:12.5px;color:var(--text-muted)}
 
-
-/* Right icons */
+/* Right section */
 .topnav-right{
-  display:flex;align-items:center;gap:6px;
-  padding:0 20px;
+  display:flex;align-items:center;gap:4px;
+  padding:0 16px;
+  flex-shrink:0;
+  position:relative;z-index:2;
 }
+
+/* M&E link — orange pill */
+.topnav-me-link{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12px;font-weight:700;
+  color:var(--white);
+  padding:9px 18px;border-radius:9px;
+  background:linear-gradient(135deg,var(--orange),var(--orange-mid));
+  white-space:nowrap;
+  transition:all .2s;
+  text-decoration:none;
+  margin-right:4px;
+  letter-spacing:.02em;
+  box-shadow:0 3px 12px rgba(232,84,26,.3);
+}
+.topnav-me-link i{font-size:15px}
+.topnav-me-link:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(232,84,26,.4);
+  filter:brightness(1.05);
+}
+
+/* Divider */
+.topnav-divider{
+  width:1px;height:28px;
+  background:var(--border);
+  margin:0 6px;flex-shrink:0;
+}
+
+/* Icon buttons (bell, signout) */
 .topnav-icon-btn{
-  width:38px;height:38px;border-radius:10px;
+  width:38px;height:38px;border-radius:9px;
   border:none;background:transparent;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  font-size:19px;color:var(--text-muted);
+  font-size:18px;color:var(--text-muted);
   transition:all .15s;position:relative;text-decoration:none;
 }
-.topnav-icon-btn:hover{background:var(--surface);color:var(--text)}
+.topnav-icon-btn:hover{
+  background:var(--surface);
+  color:var(--text);
+}
+
+/* Notification badge */
 .topnav-badge{
-  position:absolute;top:3px;right:3px;
+  position:absolute;top:4px;right:4px;
   min-width:16px;height:16px;border-radius:8px;
   background:var(--orange);color:#fff;
   font-size:9px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   padding:0 3px;
+  border:1.5px solid var(--white);
 }
+
+/* User btn — avatar + name */
+.topnav-user-btn{
+  display:flex;align-items:center;gap:9px;
+  padding:5px 10px 5px 5px;
+  border-radius:10px;
+  text-decoration:none;
+  transition:background .15s;
+  cursor:pointer;
+  margin:0 2px;
+}
+.topnav-user-btn:hover{background:var(--surface)}
 .topnav-avatar{
-  width:34px;height:34px;border-radius:50%;
+  width:33px;height:33px;border-radius:50%;flex-shrink:0;
   background:linear-gradient(135deg,var(--orange),var(--orange-mid));
-  color:#fff;
-  font-size:12px;font-weight:700;
+  color:#fff;font-size:12px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   letter-spacing:.02em;
-  box-shadow:0 2px 8px rgba(232,84,26,.35);
+  box-shadow:0 2px 10px rgba(232,84,26,.35);
 }
-.topnav-signout:hover{background:#fde9e9;color:#c53030}
+.topnav-user-name{
+  font-size:12.5px;font-weight:600;
+  color:var(--text);
+  white-space:nowrap;
+  max-width:120px;
+  overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Sign out button */
+.topnav-signout-btn{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;color:var(--text-muted);
+  transition:all .15s;text-decoration:none;
+  margin-left:2px;
+}
+.topnav-signout-btn:hover{
+  background:#fde9e9;
+  color:#dc2626;
+}
 
 /* Notification panel */
 .topnav-notif-wrap{position:relative}
 .notif-panel{
   display:none;
-  position:absolute;top:calc(100% + 8px);right:0;
+  position:absolute;top:calc(100% + 10px);right:0;
   width:340px;
   background:var(--white);
   border:1px solid var(--border);
   border-radius:14px;
-  box-shadow:0 8px 32px rgba(26,31,46,.12);
+  box-shadow:0 12px 40px rgba(13,30,61,.18);
   z-index:300;overflow:hidden;
 }
 .notif-panel.open{display:block}
 .notif-panel-head{
   display:flex;align-items:center;justify-content:space-between;
-  padding:13px 16px;
+  padding:14px 16px;
   border-bottom:1px solid var(--border);
   font-size:13px;font-weight:700;color:var(--text);
+  background:var(--surface);
 }
 .notif-count{font-size:11px;font-weight:400;color:var(--text-muted)}
 .notif-list{max-height:340px;overflow-y:auto}
 .notif-item{
   display:flex;align-items:flex-start;gap:10px;
-  padding:11px 16px;
-  border-bottom:1px solid var(--border);
-  transition:background .12s;
+  padding:11px 16px;border-bottom:1px solid var(--border);
+  transition:background .12s;text-decoration:none;
 }
 .notif-item:hover{background:var(--surface)}
 .notif-icon{
@@ -322,6 +387,7 @@ a{text-decoration:none;color:inherit}
 .notif-panel-foot{
   padding:10px 16px;text-align:center;
   font-size:12px;border-top:1px solid var(--border);
+  background:var(--surface);
 }
 .notif-panel-foot a{color:var(--orange);font-weight:600}
 
@@ -334,33 +400,34 @@ a{text-decoration:none;color:inherit}
   background:var(--white);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  position:fixed;top:64px;left:0;
-  height:calc(100vh - 64px);
+  position:fixed;top:66px;left:0;
+  height:calc(100vh - 66px);
   overflow-y:auto;z-index:50;
-  /* subtle right shadow instead of hard border */
-  border-right:none;
-  box-shadow:2px 0 12px rgba(26,31,46,.06);
+  /* thin, unobtrusive scrollbar instead of default thick one */
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
 }
+.sidebar::-webkit-scrollbar{width:5px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{
+  background:var(--border);
+  border-radius:10px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover{background:var(--text-light)}
 
-/* Sidebar brand — logo + CSI Hub + platform label */
+/* Sidebar brand — text only (logo lives in header) */
 .sidebar-brand{
-  display:flex;align-items:center;gap:11px;
-  padding:15px 16px 13px;
+  display:flex;align-items:center;
+  padding:18px 16px 15px;
   border-bottom:1px solid var(--border);
 }
-.sidebar-logo{
-  height:32px;width:auto;
-  object-fit:contain;flex-shrink:0;
-  /* Hard cap so it can never overflow */
-  max-width:40px;
-}
-.sidebar-brand-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.sidebar-brand-text{display:flex;flex-direction:column;line-height:1.3;min-width:0}
 .sidebar-brand-name{
-  font-size:13px;font-weight:700;color:var(--text);
+  font-size:14px;font-weight:700;color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .sidebar-brand-sub{
-  font-size:9px;color:var(--orange);
+  font-size:9.5px;color:var(--orange);
   text-transform:uppercase;letter-spacing:.08em;margin-top:1px;
 }
 
@@ -437,8 +504,8 @@ a{text-decoration:none;color:inherit}
 ──────────────────────────────────────────────── */
 .layout{
   display:flex;
-  min-height:calc(100vh - 64px);
-  margin-top:64px;
+  min-height:calc(100vh - 66px);
+  margin-top:66px;
 }
 .main{
   flex:1;
@@ -446,7 +513,16 @@ a{text-decoration:none;color:inherit}
   padding:28px 32px;
   margin-left:240px;
   overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
 }
+.main::-webkit-scrollbar{width:6px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{
+  background:var(--border);
+  border-radius:10px;
+}
+.main::-webkit-scrollbar-thumb:hover{background:var(--text-light)}
 
 /* ── PAGE STRUCTURE ──────────────────────────── */
 .page-banner{
@@ -687,23 +763,40 @@ textarea.form-input{resize:vertical;min-height:80px}
 <!-- TOP NAV -->
 <nav class="topnav">
 
-  <!-- Left: Logo on white background -->
+  <!-- LEFT: Logo icon + crisp text wordmark -->
   <div class="topnav-left">
-    <a href="dashboard.php" style="display:flex;align-items:center;height:100%">
+    <a href="dashboard.php" class="topnav-logo-link">
       <img src="assets/img/logo.png" alt="Research Unlimited" class="topnav-logo">
+      <div class="topnav-logo-text">
+        <span class="topnav-logo-name">Research Unlimited</span>
+        <span class="topnav-logo-tag">Research Made Easy</span>
+      </div>
     </a>
   </div>
 
-  <!-- Centre: M&E link only -->
+  <!-- CENTRE: Search -->
   <div class="topnav-centre">
+    <div class="topnav-search-wrap">
+      <i class="ti ti-search topnav-search-icon"></i>
+      <input type="text" class="topnav-search" id="global-search"
+        placeholder="Search partners, schools, documents…"
+        autocomplete="off"
+        oninput="globalSearch(this.value)"
+        onfocus="showResults()"
+        onblur="setTimeout(hideResults,200)">
+      <div class="topnav-search-results" id="search-results"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: M&E + bell + user + signout -->
+  <div class="topnav-right">
+
     <a href="programmes.php" class="topnav-me-link">
       <i class="ti ti-activity"></i>
-      Monitoring &amp; Evaluation (M&amp;E)
+      <span>M&amp;E Programmes</span>
     </a>
-  </div>
 
-  <!-- Right: notifications + user icon + sign out only -->
-  <div class="topnav-right">
+    <div class="topnav-divider"></div>
 
     <!-- Notification bell -->
     <div class="topnav-notif-wrap" id="notif-wrap">
@@ -713,8 +806,6 @@ textarea.form-input{resize:vertical;min-height:80px}
         <span class="topnav-badge"><?= $_notif_count ?></span>
         <?php endif; ?>
       </button>
-
-      <!-- Dropdown -->
       <div class="notif-panel" id="notif-panel">
         <div class="notif-panel-head">
           <span>Notifications</span>
@@ -741,24 +832,25 @@ textarea.form-input{resize:vertical;min-height:80px}
         </div>
         <?php endif; ?>
         <div class="notif-panel-foot">
-          <a href="dashboard.php">View dashboard →</a>
+          <a href="dashboard.php">View all →</a>
         </div>
       </div>
     </div>
 
-    <!-- User icon → edit profile -->
-    <a href="profile.php" class="topnav-icon-btn topnav-user-btn" title="Edit your profile">
+    <!-- User avatar → profile -->
+    <a href="profile.php" class="topnav-user-btn" title="Edit profile">
       <span class="topnav-avatar"><?= $_hn_initials ?></span>
+      <span class="topnav-user-name"><?= htmlspecialchars($_hn_name) ?></span>
     </a>
 
     <!-- Sign out -->
-    <a href="logout.php" class="topnav-icon-btn topnav-signout" title="Sign out">
+    <a href="logout.php" class="topnav-signout-btn" title="Sign out">
       <i class="ti ti-logout"></i>
     </a>
 
   </div>
-</nav>
 
+</nav>
 <script>
 function toggleNotif() {
   const p = document.getElementById('notif-panel');
