@@ -40,8 +40,12 @@ $params = [];
 if ($search) { $where .= ' AND c.name LIKE ?'; $params[] = "%{$search}%"; }
 if ($filter_status) { $where .= ' AND c.status=?'; $params[] = $filter_status; }
 
-// For non-admin users linked to a company, restrict to their own
-if (!is_admin() && isset($_SESSION['linked_id'])) {
+// Data isolation:
+// - Company users: see ONLY their own partner record
+// - School users: see ALL partners (they need to find/identify partners,
+//   but their own school data isolation happens in schools.php)
+// - Admin: sees everything
+if (!is_admin() && ($_SESSION['user_type']??'') === 'company' && isset($_SESSION['linked_id'])) {
     $where .= ' AND c.id=?'; $params[] = (int)$_SESSION['linked_id'];
 }
 

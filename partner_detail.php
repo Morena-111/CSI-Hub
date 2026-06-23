@@ -6,8 +6,9 @@ require_once 'includes/db.php';
 $id = (int)($_GET['id']??0);
 if (!$id) { header('Location: /csi-hub/partners.php'); exit; }
 
-// If non-admin is linked to a company, enforce data isolation
-if (!is_admin() && isset($_SESSION['linked_id']) && (int)$_SESSION['linked_id'] !== $id) {
+// page (schools need to see who their partners are; admin sees all).
+if (!is_admin() && ($_SESSION['user_type']??'') === 'company'
+    && isset($_SESSION['linked_id']) && (int)$_SESSION['linked_id'] !== $id) {
     header('Location: /csi-hub/partners.php'); exit;
 }
 

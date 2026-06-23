@@ -138,56 +138,56 @@ $_notif_count = count($_notifs);
   --text-muted:#6b7a99; --text-light:#a0aec0;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text)}
+html,body{height:100%;font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
 img{max-width:100%}
 a{text-decoration:none;color:inherit}
 
 /* ══════════════════════════════════════════════
-   TOP NAV — Dark navy, professional CSI look
+   TOP NAV — Real platform feel, humanised
+   Inspired by established CSI/enterprise tools:
+   clean white, warm navy left zone, orange accent
 ══════════════════════════════════════════════ */
 .topnav{
   position:fixed;top:0;left:0;right:0;z-index:100;
-  height:66px;
+  height:60px;
   background:var(--white);
-  display:flex;align-items:center;
-  box-shadow:0 2px 18px rgba(13,30,61,.08);
-  position:relative;
+  display:flex;align-items:stretch;
+  box-shadow:0 1px 0 #e2e8f0, 0 2px 8px rgba(13,30,61,.06);
 }
-/* gradient accent line along the bottom — brand identity */
-.topnav::after{
-  content:'';
-  position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--orange) 0%,var(--orange-mid) 35%,var(--teal) 100%);
-}
+/* No pseudo-element gradients — clean and real */
 
-/* Left: logo zone on dark nav — no border, kept visually separate from sidebar below */
+/* LEFT ZONE — plain white, matches the rest of the header */
 .topnav-left{
   width:240px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  padding:0 20px;
-  height:100%;
+  display:flex;align-items:center;
+  padding:0 18px;
+  background:#ffffff;
+  border-right:1px solid #e2e8f0;
   position:relative;z-index:2;
 }
 .topnav-logo-link{
   display:flex;align-items:center;gap:10px;
-  height:100%;
-  transition:transform .2s;
+  text-decoration:none;
+  padding:4px 0;
+  transition:opacity .15s;
 }
-.topnav-logo-link:hover{transform:scale(1.02)}
-.topnav-logo-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.topnav-logo-link:hover{opacity:.85}
+.topnav-logo{
+  height:36px;width:auto;
+  object-fit:contain;display:block;
+  flex-shrink:0;
+  border-radius:6px;
+}
+.topnav-logo-text{display:flex;flex-direction:column;line-height:1.2;min-width:0}
 .topnav-logo-name{
-  font-size:13.5px;font-weight:700;color:var(--text);
+  font-size:13px;font-weight:700;
+  color:#0d1e3d;
   white-space:nowrap;letter-spacing:-.01em;
 }
 .topnav-logo-tag{
-  font-size:9.5px;color:var(--orange);
-  text-transform:uppercase;letter-spacing:.06em;
-  white-space:nowrap;
-}
-.topnav-logo{
-  height:38px;width:auto;
-  object-fit:contain;display:block;
-  flex-shrink:0;
+  font-size:9px;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.08em;
+  white-space:nowrap;margin-top:1px;
 }
 
 /* Centre: search */
@@ -277,22 +277,22 @@ a{text-decoration:none;color:inherit}
 
 /* Divider */
 .topnav-divider{
-  width:1px;height:28px;
-  background:var(--border);
-  margin:0 6px;flex-shrink:0;
+  width:1px;height:24px;
+  background:#dce3ef;
+  margin:0 4px;flex-shrink:0;
 }
 
 /* Icon buttons (bell, signout) */
 .topnav-icon-btn{
-  width:38px;height:38px;border-radius:9px;
+  width:36px;height:36px;border-radius:8px;
   border:none;background:transparent;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  font-size:18px;color:var(--text-muted);
+  font-size:17px;color:#64748b;
   transition:all .15s;position:relative;text-decoration:none;
 }
 .topnav-icon-btn:hover{
-  background:var(--surface);
-  color:var(--text);
+  background:#f1f5f9;
+  color:#0d1e3d;
 }
 
 /* Notification badge */
@@ -335,14 +335,14 @@ a{text-decoration:none;color:inherit}
 
 /* Sign out button */
 .topnav-signout-btn{
-  width:36px;height:36px;border-radius:8px;
+  width:34px;height:34px;border-radius:7px;
   display:flex;align-items:center;justify-content:center;
-  font-size:17px;color:var(--text-muted);
+  font-size:16px;color:#94a3b8;
   transition:all .15s;text-decoration:none;
   margin-left:2px;
 }
 .topnav-signout-btn:hover{
-  background:#fde9e9;
+  background:#fef2f2;
   color:#dc2626;
 }
 
@@ -400,8 +400,8 @@ a{text-decoration:none;color:inherit}
   background:var(--white);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  position:fixed;top:66px;left:0;
-  height:calc(100vh - 66px);
+  position:fixed;top:60px;left:0;
+  height:calc(100vh - 60px);
   overflow-y:auto;z-index:50;
   /* thin, unobtrusive scrollbar instead of default thick one */
   scrollbar-width:thin;
@@ -504,14 +504,16 @@ a{text-decoration:none;color:inherit}
 ──────────────────────────────────────────────── */
 .layout{
   display:flex;
-  min-height:calc(100vh - 66px);
-  margin-top:66px;
+  height:calc(100vh - 60px);
+  margin-top:60px;
+  overflow:hidden;
 }
 .main{
   flex:1;
   min-width:0;
   padding:28px 32px;
   margin-left:240px;
+  height:100%;
   overflow-y:auto;
   scrollbar-width:thin;
   scrollbar-color:var(--border) transparent;
@@ -871,16 +873,29 @@ let _st = null;
 function globalSearch(q) {
   clearTimeout(_st);
   const box = document.getElementById('search-results');
-  if (!q || q.length < 2) { box.innerHTML=''; box.classList.remove('visible'); return; }
+  if (!q || q.length < 2) {
+    box.innerHTML='';
+    box.classList.remove('visible');
+    return;
+  }
+  // Show loading state immediately
+  box.innerHTML = '<div class="search-result-empty" style="color:var(--text-muted)"><i class="ti ti-loader" style="font-size:16px;display:block;margin-bottom:6px"></i>Searching…</div>';
+  box.classList.add('visible');
+
   _st = setTimeout(() => {
-    fetch('search.php?q=' + encodeURIComponent(q))
-      .then(r => r.json())
+    fetch('/csi-hub/search.php?q=' + encodeURIComponent(q), {
+      credentials: 'same-origin'
+    })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(data => {
         if (!data.length) {
-          box.innerHTML = '<div class="search-result-empty">No results for "' + escHtml(q) + '"</div>';
+          box.innerHTML = '<div class="search-result-empty">No results found for "<strong>' + escHtml(q) + '</strong>"</div>';
         } else {
           box.innerHTML = data.map(r => `
-            <a href="${r.url}" class="search-result-item">
+            <a href="/csi-hub/${r.url}" class="search-result-item">
               <div class="search-result-icon" style="background:${r.bg};color:${r.color}">
                 <i class="ti ${r.icon}"></i>
               </div>
@@ -892,8 +907,12 @@ function globalSearch(q) {
         }
         box.classList.add('visible');
       })
-      .catch(() => { box.innerHTML=''; box.classList.remove('visible'); });
-  }, 220);
+      .catch(err => {
+        box.innerHTML = '<div class="search-result-empty" style="color:#c53030"><i class="ti ti-alert-circle" style="font-size:14px"></i> Search unavailable</div>';
+        box.classList.add('visible');
+        console.error('Search error:', err);
+      });
+  }, 250);
 }
 function showResults() {
   const q = document.getElementById('global-search').value;

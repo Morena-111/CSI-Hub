@@ -56,26 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'passwor
     }
 }
 
-// ── EXPORT CSV ───────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'export_csv') {
-    $type = $_POST['export_type'] ?? 'partnerships';
-    $queries = [
-        'partnerships' => "SELECT p.id, c.name AS company, s.name AS school, p.focus_area, p.amount, p.start_date, p.end_date, p.status FROM partnerships p JOIN companies c ON c.id=p.company_id JOIN schools s ON s.id=p.school_id",
-        'schools'      => "SELECT id, name, location, province, school_type, status FROM schools",
-        'companies'    => "SELECT id, name, sector, since_year, status FROM companies",
-    ];
-    $rows = $pdo->query($queries[$type] ?? $queries['partnerships'])->fetchAll();
-    if (!empty($rows)) {
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="'.$type.'_'.date('Y-m-d').'.csv"');
-        $out = fopen('php://output', 'w');
-        fputcsv($out, array_keys($rows[0]));
-        foreach ($rows as $row) fputcsv($out, $row);
-        fclose($out);
-        exit;
-    }
-    $error_msg = 'No data to export.';
-}
+// ── EXPORT CSV handled above before HTML output ────────────
 
 // ── SAVE PREFERENCES ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'preferences') {
