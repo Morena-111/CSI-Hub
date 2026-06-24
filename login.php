@@ -1,6 +1,7 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
-if (isset($_SESSION['role'])) { header('Location: /csi-hub/dashboard.php'); exit; }
+if (isset($_SESSION['role'])) { redirect('dashboard.php');  }
 
 $_root_pw_file = __DIR__ . '/data/root_password.json';
 $_root_pw      = file_exists($_root_pw_file)
@@ -26,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form']??'') === 'login') {
         session_regenerate_id(true);
         $_SESSION['role']='admin'; $_SESSION['name']=$admin_accounts[$u]['name'];
         $_SESSION['username']=$u; $_SESSION['login_time']=time();
-        header('Location: /csi-hub/dashboard.php'); exit;
+        redirect('dashboard.php'); 
     }
     $approved = array_filter($pending, fn($v) => ($v['approved']??false));
     if (isset($approved[$u]) && $approved[$u]['password'] === $p) {
@@ -38,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form']??'') === 'login') {
         $_SESSION['user_type'] = $approved[$u]['user_type'] ?? 'general';
         $_SESSION['linked_id'] = $approved[$u]['linked_id'] ?? null;
         $_SESSION['login_time']= time();
-        header('Location: /csi-hub/dashboard.php'); exit;
+        redirect('dashboard.php'); 
     }
     $error = isset($pending[$u]) && !($pending[$u]['approved']??false)
         ? 'Your account is pending approval. Contact info@researchunlimitedsa.co.za.'

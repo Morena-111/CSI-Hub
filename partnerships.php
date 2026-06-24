@@ -1,8 +1,28 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 $active_page = 'partnerships';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 include 'includes/header.php';
+
+// ── PARTNER FILTER MODE ────────────────────────────────────────
+// When ?partner_id=X is present, this page behaves like the old
+// partner_detail.php: shows only that partner's projects, grouped
+// by school, with the same data-isolation rule (company users can
+// only view their own partner_id).
+$filter_partner_id = (int)($_GET['partner_id'] ?? 0);
+$viewing_partner    = null;
+
+if ($filter_partner_id) {
+    if (!is_admin() && ($_SESSION['user_type']??'') === 'company'
+        && isset($_SESSION['linked_id']) && (int)$_SESSION['linked_id'] !== $filter_partner_id) {
+        redirect('partnerships.php'); 
+    }
+    $pst = $pdo->prepare("SELECT * FROM companies WHERE id=?");
+    $pst->execute([$filter_partner_id]);
+    $viewing_partner = $pst->fetch();
+    if (!$viewing_partner) { redirect('partnerships.php');  }
+}
 
 // ── HANDLE ADD ───────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_partnership' && can_edit()) {
@@ -29,14 +49,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'update_
 }
 
 // ── FETCH DATA ───────────────────────────────────────────────
-$partnerships = $pdo->query("
+$pw_sql = "
     SELECT p.*, c.name AS company_name, c.initials AS company_initials, c.sector,
-           s.name AS school_name, s.province
+           s.name AS school_name, s.province, s.location
     FROM partnerships p
     JOIN companies c ON c.id = p.company_id
     JOIN schools   s ON s.id = p.school_id
-    ORDER BY p.created_at DESC
-")->fetchAll();
+";
+$pw_params = [];
+if ($filter_partner_id) {
+    $pw_sql .= " WHERE p.company_id = ?";
+    $pw_params[] = $filter_partner_id;
+}
+$pw_sql .= " ORDER BY s.name, p.created_at DESC";
+$pwst = $pdo->prepare($pw_sql);
+$pwst->execute($pw_params);
+$partnerships = $pwst->fetchAll();
+
+// Impact stats for the partner being viewed
+$viewing_impact = ['learners'=>0,'educators'=>0];
+if ($filter_partner_id) {
+    $ist = $pdo->prepare("
+        SELECT COALESCE(SUM(i.learners),0) AS learners, COALESCE(SUM(i.educators),0) AS educators
+        FROM impact_stats i JOIN partnerships p ON p.id=i.partnership_id
+        WHERE p.company_id=?
+    ");
+    $ist->execute([$filter_partner_id]);
+    $viewing_impact = $ist->fetch();
+}
 
 $companies_list = $pdo->query("SELECT id, name FROM companies ORDER BY name")->fetchAll();
 $schools_list   = $pdo->query("SELECT id, name FROM schools ORDER BY name")->fetchAll();
@@ -72,8 +112,48 @@ function calcProgress($start, $end, $status) {
     <i class="ti ti-home" style="font-size:13px"></i>
     <span style="color:var(--text-muted)">Home</span>
     <span style="color:var(--border)">›</span>
-    <span class="active-crumb">Partnerships</span>
+    <?php if ($viewing_partner): ?>
+      <a href="partnerships.php" style="color:var(--text-muted)">Partnerships</a>
+      <span style="color:var(--border)">›</span>
+      <span class="active-crumb"><?= htmlspecialchars($viewing_partner['name']) ?></span>
+    <?php else: ?>
+      <span class="active-crumb">Partnerships</span>
+    <?php endif; ?>
   </div>
+
+  <?php if ($viewing_partner): ?>
+  <!-- PARTNER INFO BANNER — replaces the old partner_detail.php header -->
+  <div class="widget" style="margin-bottom:18px">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--orange-soft);
+                  color:var(--orange);display:flex;align-items:center;justify-content:center;
+                  font-size:18px;font-weight:700;flex-shrink:0">
+        <?= strtoupper(substr($viewing_partner['name'],0,2)) ?>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <h2 style="font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--text);margin-bottom:3px">
+          <?= htmlspecialchars($viewing_partner['name']) ?>
+        </h2>
+        <p style="font-size:12.5px;color:var(--text-muted)">
+          <?= htmlspecialchars($viewing_partner['sector']??'') ?>
+          <?php if($viewing_partner['since_year']): ?> · Since <?= htmlspecialchars($viewing_partner['since_year']) ?><?php endif; ?>
+          · <span class="status-badge <?= $viewing_partner['status'] ?>"><?= ucfirst($viewing_partner['status']) ?></span>
+        </p>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="text-align:center;padding:8px 14px;background:var(--teal-soft);border-radius:9px">
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--teal)"><?= number_format($viewing_impact['learners']) ?></div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Learners</div>
+        </div>
+        <div style="text-align:center;padding:8px 14px;background:var(--purple-soft);border-radius:9px">
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--purple)"><?= number_format($viewing_impact['educators']) ?></div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Educators</div>
+        </div>
+      </div>
+      <a href="partnerships.php" class="btn btn-secondary"><i class="ti ti-arrow-left"></i> All Partnerships</a>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <?php if ($success): ?>
   <div style="background:#e6faf5;border:1px solid #a7e9d3;color:#054d36;border-radius:8px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:13px">
@@ -84,8 +164,10 @@ function calcProgress($start, $end, $status) {
 
   <div class="page-header">
     <div>
-      <h1>Partnerships</h1>
-      <p>List of partners in the CSI platform</p>
+      <h1><?= $viewing_partner ? 'Projects' : 'Partnerships' ?></h1>
+      <p><?= $viewing_partner
+            ? 'All projects for ' . htmlspecialchars($viewing_partner['name']) . ', grouped by school'
+            : 'List of partners in the CSI programme' ?></p>
     </div>
     <?php permission_btn('Add Partnership', can_edit(), 'ti-plus', 'btn btn-primary', "openModal('add-modal')") ?>
   </div>
@@ -154,7 +236,7 @@ function calcProgress($start, $end, $status) {
   <table class="data-table">
     <thead>
       <tr>
-        <th>Company</th>
+        <?php if (!$viewing_partner): ?><th>Company</th><?php endif; ?>
         <th>Industry</th>
         <th>Focus</th>
         <th>Schools</th>
@@ -170,9 +252,11 @@ function calcProgress($start, $end, $status) {
         $progress = calcProgress($p['start_date'], $p['end_date'], $p['status']);
       ?>
       <tr>
+        <?php if (!$viewing_partner): ?>
         <td>
           <span class="cell-name"><?= htmlspecialchars($p['company_name']) ?></span>
         </td>
+        <?php endif; ?>
         <td style="color:var(--text-muted);font-size:12.5px"><?= htmlspecialchars($p['sector'] ?? '—') ?></td>
         <td><?= htmlspecialchars($p['focus_area']) ?></td>
         <td style="text-align:center">

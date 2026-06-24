@@ -1,4 +1,5 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 $active_page = 'schools';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
@@ -7,7 +8,7 @@ require_once 'includes/db.php';
 $scope_school = null;
 if (!is_admin()) {
     if (($_SESSION['user_type']??'') === 'company') {
-        header('Location: /csi-hub/partners.php'); exit;
+        redirect('partners.php'); 
     }
     if (($_SESSION['user_type']??'') === 'school' && isset($_SESSION['linked_id'])) {
         $scope_school = (int)$_SESSION['linked_id'];

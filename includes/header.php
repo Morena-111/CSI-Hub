@@ -1,9 +1,10 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/../config.php';
 /**
  * header.php
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['role'])) { header('Location: /csi-hub/login.php'); exit; }
+if (!isset($_SESSION['role'])) { redirect('login.php');  }
 if (!function_exists('is_admin')) { require_once __DIR__ . '/auth.php'; }
 
 $_hn_name     = $_SESSION['name'] ?? 'User';
@@ -853,6 +854,8 @@ textarea.form-input{resize:vertical;min-height:80px}
 
 </nav>
 <script>
+// Base path — works on both localhost/csi-hub/ and live root /
+const BASE_PATH = '<?= defined("BASE_URL") ? BASE_URL : "/csi-hub/" ?>';
 function toggleNotif() {
   const p = document.getElementById('notif-panel');
   p.classList.toggle('open');
@@ -882,7 +885,7 @@ function globalSearch(q) {
   box.classList.add('visible');
 
   _st = setTimeout(() => {
-    fetch('/csi-hub/search.php?q=' + encodeURIComponent(q), {
+    fetch(BASE_PATH + 'search.php?q=' + encodeURIComponent(q), {
       credentials: 'same-origin'
     })
       .then(r => {
@@ -894,7 +897,7 @@ function globalSearch(q) {
           box.innerHTML = '<div class="search-result-empty">No results found for "<strong>' + escHtml(q) + '</strong>"</div>';
         } else {
           box.innerHTML = data.map(r => `
-            <a href="/csi-hub/${r.url}" class="search-result-item">
+            <a href="${BASE_PATH + r.url}" class="search-result-item">
               <div class="search-result-icon" style="background:${r.bg};color:${r.color}">
                 <i class="ti ${r.icon}"></i>
               </div>

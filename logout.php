@@ -1,4 +1,5 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 /**
  * logout.php
  */
@@ -9,5 +10,4 @@ if (ini_get('session.use_cookies')) {
     $p = session_get_cookie_params();
     setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
 }
-header('Location: /csi-hub/login.php');
-exit;
+redirect('login.php');

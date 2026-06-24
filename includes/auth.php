@@ -1,4 +1,5 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/../config.php';
 /**
  * auth.php — Role-Based Access Control
  */
@@ -6,8 +7,8 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_SESSION['role'])) {
-    header('Location: /csi-hub/login.php');
-    exit;
+    redirect('login.php');
+    
 }
 
 // ── ROLE HELPERS ─────────────────────────────────────────────
@@ -64,8 +65,8 @@ function current_user_initials(): string {
  */
 function require_admin_role(): void {
     if (!is_admin()) {
-        header('Location: /csi-hub/dashboard.php?error=access_denied');
-        exit;
+        redirect('dashboard.php?error=access_denied');
+        
     }
 }
 
