@@ -1,7 +1,6 @@
 <?php
 /**
  * header.php
- * Place in: C:\xampp\htdocs\csi-hub\includes\header.php
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['role'])) { header('Location: /csi-hub/login.php'); exit; }
