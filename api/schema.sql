@@ -3,8 +3,15 @@
 -- Run this in phpMyAdmin → csi_hub database → SQL tab
 -- ============================================================
 
+-- ─── CSI HUB DATABASE ───────────────────────────────────────────────
+CREATE DATABASE IF NOT EXISTS csi_hub
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE csi_hub;
+
 -- ─── COMPANIES ───────────────────────────────────────────────
-CREATE TABLE companies (
+CREATE TABLE IF NOT EXISTS companies (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     sector VARCHAR(100),
@@ -15,7 +22,7 @@ CREATE TABLE companies (
 );
 
 -- ─── SCHOOLS ───────────────────────────────────────────────
-CREATE TABLE schools (
+CREATE TABLE IF NOT EXISTS schools (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     location VARCHAR(255),
@@ -30,7 +37,7 @@ CREATE TABLE schools (
 
 
 -- ─── PARTNERSHIPS ───────────────────────────────────────────────
-CREATE TABLE partnerships (
+CREATE TABLE IF NOT EXISTS partnerships (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     school_id INT NOT NULL,
@@ -54,7 +61,7 @@ CREATE TABLE partnerships (
 );
 
 -- ─── IMPACT STATS ───────────────────────────────────────────────
-CREATE TABLE impact_stats (
+CREATE TABLE IF NOT EXISTS impact_stats (
     id INT AUTO_INCREMENT PRIMARY KEY,
     partnership_id INT NOT NULL,
     learners INT DEFAULT 0,
