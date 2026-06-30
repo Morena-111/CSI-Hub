@@ -84,6 +84,39 @@ if (is_admin()) {
     <?php endforeach; ?>
   </nav>
 
+  <!-- Help / Contact card — different content for admin vs users -->
+  <div class="sidebar-help">
+    <?php if (is_admin()): ?>
+    <div class="sidebar-help-title">
+      <i class="ti ti-headset"></i> Admin Support
+    </div>
+    <a href="tel:+27795343798" class="sidebar-help-item">
+      <i class="ti ti-phone"></i>
+      <span>079 534 3798</span>
+    </a>
+    <a href="mailto:lwandile@researchunlimited.co.za" class="sidebar-help-item">
+      <i class="ti ti-mail"></i>
+      <span>lwandile@researchunlimited.co.za</span>
+    </a>
+    <a href="mailto:it@researchunlimited.co.za" class="sidebar-help-item">
+      <i class="ti ti-device-laptop"></i>
+      <span>IT Team Support</span>
+    </a>
+    <?php else: ?>
+    <div class="sidebar-help-title">
+      <i class="ti ti-lifebuoy"></i> Need Help?
+    </div>
+    <a href="tel:+27795343798" class="sidebar-help-item">
+      <i class="ti ti-phone"></i>
+      <span>079 534 3798</span>
+    </a>
+    <a href="mailto:helpdesk@researchunlimited.co.za" class="sidebar-help-item">
+      <i class="ti ti-mail"></i>
+      <span>helpdesk@researchunlimited.co.za</span>
+    </a>
+    <?php endif; ?>
+  </div>
+
   <!-- User block bottom -->
   <div class="sidebar-user">
     <div class="sidebar-user-avatar"><?= $_sb_initials ?></div>

@@ -6,6 +6,10 @@ require_once 'includes/db.php';
 include 'includes/header.php';
 
 // ── PARTNER FILTER MODE ────────────────────────────────────────
+// When ?partner_id=X is present, this page behaves like the old
+// partner_detail.php: shows only that partner's projects, grouped
+// by school, with the same data-isolation rule (company users can
+// only view their own partner_id).
 $filter_partner_id = (int)($_GET['partner_id'] ?? 0);
 $viewing_partner    = null;
 
@@ -46,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'update_
 
 // ── FETCH DATA ───────────────────────────────────────────────
 $pw_sql = "
-    SELECT p.*, c.name AS company_name, c.initials AS company_initials, c.sector,
+    SELECT p.*, c.name AS company_name, c.sector,
            s.name AS school_name, s.province, s.location
     FROM partnerships p
     JOIN companies c ON c.id = p.company_id

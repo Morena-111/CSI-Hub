@@ -120,8 +120,9 @@ $_notif_count = count($_notifs);
 <title>CSI Hub | Research Unlimited</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="assets/css/main.css">
-<link rel="stylesheet" href="assets/css/modal.css">
+<!-- assets/css/main.css and modal.css intentionally NOT loaded here.
+     All styling lives in the inline <style> block below to guarantee
+     it always wins and never conflicts with old/cached CSS files. -->
 <style>
 /* ══════════════════════════════════════════════════
    CSI Hub — Core Styles (embedded in header.php)
@@ -192,24 +193,24 @@ a{text-decoration:none;color:inherit}
 
 /* Centre: search */
 .topnav-centre{
-  flex:1;display:flex;align-items:center;
-  justify-content:center;padding:0 24px;
+  flex:1;display:flex;align-items:center;gap:18px;
+  justify-content:flex-end;padding:0 20px;
   position:relative;z-index:2;
 }
 .topnav-search-wrap{
-  position:relative;width:100%;max-width:440px;
+  position:relative;width:100%;max-width:230px;
 }
 .topnav-search-icon{
-  position:absolute;left:13px;top:50%;
+  position:absolute;left:11px;top:50%;
   transform:translateY(-50%);
-  font-size:15px;color:var(--text-light);
+  font-size:13px;color:var(--text-light);
   pointer-events:none;
 }
 .topnav-search{
-  width:100%;padding:10px 16px 10px 40px;
+  width:100%;padding:7px 12px 7px 32px;
   border:1.5px solid var(--border);
-  border-radius:10px;
-  font-size:13px;font-family:'Poppins',sans-serif;
+  border-radius:8px;
+  font-size:12px;font-family:'Poppins',sans-serif;
   color:var(--text);
   background:var(--surface);
   outline:none;transition:all .2s;
@@ -218,11 +219,12 @@ a{text-decoration:none;color:inherit}
 .topnav-search:focus{
   border-color:var(--orange);
   background:var(--white);
-  box-shadow:0 0 0 4px var(--orange-soft);
+  box-shadow:0 0 0 3px var(--orange-soft);
 }
 .topnav-search-results{
   display:none;
   position:absolute;top:calc(100% + 8px);left:0;right:0;
+  min-width:280px;
   background:var(--white);
   border:1px solid var(--border);
   border-radius:12px;
@@ -254,25 +256,38 @@ a{text-decoration:none;color:inherit}
   position:relative;z-index:2;
 }
 
-/* M&E link — orange pill */
+/* M&E link — THE hero element of the header.
+   This is the company's core revenue driver, so it must be
+   the single most eye-catching thing in the entire topbar. */
 .topnav-me-link{
-  display:inline-flex;align-items:center;gap:7px;
-  font-size:12px;font-weight:700;
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:14.5px;font-weight:800;
   color:var(--white);
-  padding:9px 18px;border-radius:9px;
-  background:linear-gradient(135deg,var(--orange),var(--orange-mid));
+  padding:12px 26px;border-radius:11px;
+  background:linear-gradient(135deg,var(--orange) 0%,var(--orange-mid) 55%,#ffb347 100%);
   white-space:nowrap;
   transition:all .2s;
   text-decoration:none;
-  margin-right:4px;
-  letter-spacing:.02em;
-  box-shadow:0 3px 12px rgba(232,84,26,.3);
+  margin-right:8px;margin-left:8px;
+  letter-spacing:.01em;
+  box-shadow:0 6px 20px rgba(232,84,26,.45), 0 0 0 1px rgba(232,84,26,.15);
+  position:relative;
+  animation:me-pulse 3s ease-in-out infinite;
 }
-.topnav-me-link i{font-size:15px}
+.topnav-me-link i{font-size:19px}
+.topnav-me-link .me-sub{
+  display:block;font-size:9px;font-weight:600;
+  opacity:.85;letter-spacing:.06em;text-transform:uppercase;
+  margin-top:1px;
+}
 .topnav-me-link:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 20px rgba(232,84,26,.4);
-  filter:brightness(1.05);
+  transform:translateY(-2px) scale(1.02);
+  box-shadow:0 10px 28px rgba(232,84,26,.55), 0 0 0 1px rgba(232,84,26,.2);
+  filter:brightness(1.04);
+}
+@keyframes me-pulse{
+  0%,100%{box-shadow:0 6px 20px rgba(232,84,26,.45),0 0 0 1px rgba(232,84,26,.15)}
+  50%{box-shadow:0 6px 26px rgba(232,84,26,.6),0 0 0 4px rgba(232,84,26,.08)}
 }
 
 /* Divider */
@@ -466,6 +481,36 @@ a{text-decoration:none;color:inherit}
   font-size:9px;font-weight:700;
   padding:2px 6px;border-radius:10px;
   flex-shrink:0;
+}
+
+/* Sidebar help / contact card — sits above the user block,
+   styled like the support widgets on big SaaS platforms
+   (Intercom, Zendesk-style sidebar contact card) */
+.sidebar-help{
+  margin:10px 12px 6px;
+  padding:13px 14px;
+  background:linear-gradient(135deg,#fff7ed 0%,var(--orange-soft) 100%);
+  border:1px solid rgba(232,84,26,.18);
+  border-radius:12px;
+}
+.sidebar-help-title{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.04em;
+  margin-bottom:9px;
+}
+.sidebar-help-title i{font-size:14px}
+.sidebar-help-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:11.5px;font-weight:500;color:#7c4a2d;
+  padding:5px 0;
+  text-decoration:none;
+  transition:color .15s;
+}
+.sidebar-help-item:hover{color:var(--orange)}
+.sidebar-help-item i{font-size:13px;flex-shrink:0;color:var(--orange);opacity:.75}
+.sidebar-help-item span{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
 /* Sidebar user block — bottom */
@@ -776,12 +821,22 @@ textarea.form-input{resize:vertical;min-height:80px}
     </a>
   </div>
 
-  <!-- CENTRE: Search -->
+  <!-- CENTRE: M&E (hero element) + compact search -->
   <div class="topnav-centre">
+
+    <!-- M&E — our core revenue driver, must dominate visually -->
+    <a href="programmes.php" class="topnav-me-link">
+      <i class="ti ti-chart-arrows-vertical"></i>
+      <span>
+        Monitoring &amp; Evaluation
+        <span class="me-sub">Programme M&amp;E Services</span>
+      </span>
+    </a>
+
     <div class="topnav-search-wrap">
       <i class="ti ti-search topnav-search-icon"></i>
       <input type="text" class="topnav-search" id="global-search"
-        placeholder="Search partners, schools, documents…"
+        placeholder="Search…"
         autocomplete="off"
         oninput="globalSearch(this.value)"
         onfocus="showResults()"
@@ -790,15 +845,11 @@ textarea.form-input{resize:vertical;min-height:80px}
     </div>
   </div>
 
-  <!-- RIGHT: M&E + bell + user + signout -->
+  <!-- RIGHT: bell + user + signout -->
   <div class="topnav-right">
 
-    <a href="programmes.php" class="topnav-me-link">
-      <i class="ti ti-activity"></i>
-      <span>M&amp;E Programmes</span>
-    </a>
-
     <div class="topnav-divider"></div>
+
 
     <!-- Notification bell -->
     <div class="topnav-notif-wrap" id="notif-wrap">
