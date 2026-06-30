@@ -3,6 +3,7 @@
 -- CSI Hub — Research Unlimited
 -- ============================================================
 
+<<<<<<< HEAD
 -- Use the correct database
 USE csi_hub;
 
@@ -62,6 +63,86 @@ ALTER TABLE partnerships
 -- ============================================================
 -- TABLE: documents
 -- ============================================================
+=======
+-- ─── CSI HUB DATABASE ───────────────────────────────────────────────
+CREATE DATABASE IF NOT EXISTS csi_hub
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE csi_hub;
+
+-- ─── COMPANIES ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS companies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    sector VARCHAR(100),
+    initials VARCHAR(10),
+    status ENUM('active','inactive','pending') DEFAULT 'active',
+    since_year YEAR NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ─── SCHOOLS ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS schools (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    province VARCHAR(100),
+    district VARCHAR(255),
+    school_type VARCHAR(100),
+    funding_requested DECIMAL(15,2) DEFAULT 0,
+    funding_granted DECIMAL(15,2) DEFAULT 0,
+    status ENUM('active','inactive','pending') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ─── PARTNERSHIPS ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS partnerships (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    school_id INT NOT NULL,
+    amount DECIMAL(15,2) DEFAULT 0,
+    focus_area VARCHAR(255),
+    start_date DATE,
+    end_date DATE,
+    description TEXT,
+    status ENUM('pending','active','completed','cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_partnership_company
+        FOREIGN KEY (company_id)
+        REFERENCES companies(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_partnership_school
+        FOREIGN KEY (school_id)
+        REFERENCES schools(id)
+        ON DELETE CASCADE
+);
+
+-- ─── IMPACT STATS ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS impact_stats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    partnership_id INT NOT NULL,
+    learners INT DEFAULT 0,
+    educators INT DEFAULT 0,
+    classrooms INT DEFAULT 0,
+    computers INT DEFAULT 0,
+    books INT DEFAULT 0,
+    schools_supported INT DEFAULT 0,
+    reporting_period VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_impact_partnership
+        FOREIGN KEY (partnership_id)
+        REFERENCES partnerships(id)
+        ON DELETE CASCADE
+);
+
+
+-- ─── DOCUMENTS ───────────────────────────────────────────────
+>>>>>>> d2a6b8459bd8390423dd4f0dee470d859868f7b1
 CREATE TABLE IF NOT EXISTS documents (
   id           INT AUTO_INCREMENT PRIMARY KEY,
   title        VARCHAR(255) NOT NULL,
