@@ -6,10 +6,6 @@ require_once 'includes/db.php';
 include 'includes/header.php';
 
 // ── PARTNER FILTER MODE ────────────────────────────────────────
-// When ?partner_id=X is present, this page behaves like the old
-// partner_detail.php: shows only that partner's projects, grouped
-// by school, with the same data-isolation rule (company users can
-// only view their own partner_id).
 $filter_partner_id = (int)($_GET['partner_id'] ?? 0);
 $viewing_partner    = null;
 

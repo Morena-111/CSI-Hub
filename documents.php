@@ -10,7 +10,7 @@ if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
 $success_msg = '';
 $error_msg   = '';
 
-// ── HANDLE UPLOAD ───────────────────────────────────────────
+// ── HANDLE UPLOAD ────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'upload' && !is_admin()) {
     $file = $_FILES['document'] ?? null;
 
@@ -142,18 +142,72 @@ $file_icons = [
       <h1>Documents</h1>
       <p>MOUs, reports, proposals and programme files</p>
     </div>
-    <?php if(!is_admin()): ?>
-    <button class="btn btn-primary" onclick="openModal('upload-modal')">
-      <i class="ti ti-upload"></i> Upload Document
-    </button>
-    <?php else: ?>
-    <div style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-soft);border:1px solid #a7e9d3;border-radius:9px;padding:8px 16px;font-size:12.5px;font-weight:600;color:#00956a">
-      <i class="ti ti-eye" style="font-size:15px"></i> Review Mode — users submit documents here
+    <div class="page-header-right">
+      <?php if(!is_admin()): ?>
+      <a href="document_wizard.php" class="btn btn-primary">
+        <i class="ti ti-checklist"></i> Submit Required Documents
+      </a>
+      <button class="btn btn-secondary" onclick="openModal('upload-modal')">
+        <i class="ti ti-upload"></i> Quick Upload
+      </button>
+      <?php else: ?>
+      <div style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-soft);border:1px solid #a7e9d3;border-radius:9px;padding:8px 16px;font-size:12.5px;font-weight:600;color:#00956a">
+        <i class="ti ti-eye" style="font-size:15px"></i> Review Mode — users submit documents here
+      </div>
+      <?php endif; ?>
     </div>
-    <?php endif; ?>
   </div>
 
-  <!-- STATS -->
+  <!-- WIZARD PROMPT — shown to non-admin users who haven't completed submission -->
+  <?php if(!is_admin()): ?>
+  <?php
+    $wizard_done = count($_SESSION['wizard_completed'] ?? []);
+    $wizard_total = 6;
+    $wizard_pct = $wizard_done > 0 ? round($wizard_done/$wizard_total*100) : 0;
+  ?>
+  <?php if ($wizard_done < $wizard_total): ?>
+  <div style="background:linear-gradient(135deg,#fff7ed,#fdf0ea);border:1px solid rgba(232,84,26,.2);
+              border-radius:12px;padding:16px 20px;margin-bottom:20px;
+              display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="width:44px;height:44px;border-radius:50%;background:var(--orange-soft);
+                border:2px solid var(--orange);display:flex;align-items:center;justify-content:center;
+                font-size:20px;color:var(--orange);flex-shrink:0">
+      <i class="ti ti-checklist"></i>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px">
+        <?php if ($wizard_done === 0): ?>
+          Complete your document submission to get started
+        <?php else: ?>
+          Document submission in progress — <?= $wizard_pct ?>% complete
+        <?php endif; ?>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+        <?= $wizard_done ?> of <?= $wizard_total ?> documents submitted
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:6px;overflow:hidden;max-width:280px">
+        <div style="height:100%;width:<?= $wizard_pct ?>%;background:var(--orange);border-radius:6px;transition:width .4s"></div>
+      </div>
+    </div>
+    <a href="document_wizard.php" class="btn btn-primary" style="flex-shrink:0">
+      <i class="ti ti-arrow-right"></i>
+      <?= $wizard_done === 0 ? 'Start Submission' : 'Continue Submission' ?>
+    </a>
+  </div>
+  <?php else: ?>
+  <div style="background:var(--teal-soft);border:1px solid #a7e9d3;border-radius:12px;
+              padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+    <i class="ti ti-circle-check" style="font-size:22px;color:var(--teal);flex-shrink:0"></i>
+    <div style="flex:1;font-size:13px;font-weight:600;color:#054d36">
+      All required documents submitted! 🎉 Research Unlimited will be in touch soon.
+    </div>
+    <a href="document_wizard.php" class="btn btn-secondary" style="font-size:12px;padding:6px 14px">
+      <i class="ti ti-eye"></i> View Summary
+    </a>
+  </div>
+  <?php endif; ?>
+  <?php endif; ?>
+
   <div class="stats-row three">
     <div class="stat-card orange">
       <div class="stat-label">Total Documents</div>

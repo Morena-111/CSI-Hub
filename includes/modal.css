@@ -31,18 +31,12 @@
 }
 
 @keyframes modal-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal h2 {
-  font-family: "Playfair Display", "Fraunces", serif;
+  font-family: 'Playfair Display', 'Fraunces', serif;
   font-size: 20px;
   font-weight: 700;
   color: #1a1f2e;
@@ -88,14 +82,8 @@
 }
 
 /* Form elements inside modals (in case page-level styles don't cover these) */
-.modal .form-group {
-  margin-bottom: 14px;
-}
-.modal .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+.modal .form-group { margin-bottom: 14px; }
+.modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal .form-label {
   display: block;
   font-size: 11px;
@@ -111,7 +99,7 @@
   border: 1.5px solid #e8edf5;
   border-radius: 9px;
   font-size: 13px;
-  font-family: "Poppins", "Inter", sans-serif;
+  font-family: 'Poppins', 'Inter', sans-serif;
   color: #1a1f2e;
   background: #f6f7fb;
   outline: none;
@@ -120,7 +108,7 @@
 .modal .form-input:focus,
 .modal .form-select:focus,
 .modal textarea.form-input:focus {
-  border-color: #e8541a;
+  border-color: #E8541A;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(232, 84, 26, 0.08);
+  box-shadow: 0 0 0 3px rgba(232,84,26,.08);
 }
