@@ -1,6 +1,7 @@
 <?php
 /**
  * sidebar.php
+ * Place in: C:\xampp\htdocs\csi-hub\includes\sidebar.php
  */
 
 // Determine user type label
@@ -117,12 +118,6 @@ if (is_admin()) {
     <?php endif; ?>
   </div>
 
-  <!-- Bottom: just sign out -->
-  <div class="sidebar-signout-bar">
-    <a href="logout.php" class="sidebar-signout-btn">
-      <i class="ti ti-logout"></i>
-      <span>Sign Out</span>
-    </a>
-  </div>
+  <!-- Help card handles sign out via header icon only -->
 
 </aside>
