@@ -41,10 +41,6 @@ if ($search) { $where .= ' AND c.name LIKE ?'; $params[] = "%{$search}%"; }
 if ($filter_status) { $where .= ' AND c.status=?'; $params[] = $filter_status; }
 
 // Data isolation:
-// - Company users: see ONLY their own partner record
-// - School users: see ALL partners (they need to find/identify partners,
-//   but their own school data isolation happens in schools.php)
-// - Admin: sees everything
 if (!is_admin() && ($_SESSION['user_type']??'') === 'company' && isset($_SESSION['linked_id'])) {
     $where .= ' AND c.id=?'; $params[] = (int)$_SESSION['linked_id'];
 }
@@ -179,7 +175,7 @@ include 'includes/header.php';
         <?php foreach($partners as $c): ?>
         <tr>
           <td>
-            <a href="partner_detail.php?id=<?= $c['id'] ?>"
+            <a href="partnerships.php?partner_id=<?= $c['id'] ?>"
                style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
               <div style="width:32px;height:32px;border-radius:8px;background:var(--orange-soft);
                           color:var(--orange);display:flex;align-items:center;justify-content:center;

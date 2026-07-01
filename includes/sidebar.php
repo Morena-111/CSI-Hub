@@ -1,7 +1,6 @@
 <?php
 /**
  * sidebar.php
- * Place in: C:\xampp\htdocs\csi-hub\includes\sidebar.php
  */
 
 // Determine user type label
@@ -42,6 +41,7 @@ $nav['MANAGEMENT'] = [
     ['key'=>'partners',  'icon'=>'ti-users',        'label'=>'Partners',   'href'=>'partners.php',  'badge'=>null],
     ['key'=>'schools',   'icon'=>'ti-school',        'label'=>'Schools',    'href'=>'schools.php',   'badge'=>null],
     ['key'=>'documents', 'icon'=>'ti-file-invoice',  'label'=>'Documents',  'href'=>'documents.php', 'badge'=>(int)$badge_docs ?: null],
+    ['key'=>'doc_wizard', 'icon'=>'ti-checklist',      'label'=>'Submit Docs', 'href'=>'document_wizard.php', 'badge'=>null],
     ['key'=>'events',    'icon'=>'ti-calendar',      'label'=>'Events',     'href'=>'events.php',    'badge'=>(int)$badge_events ?: null],
     ['key'=>'programmes','icon'=>'ti-topology-star-3','label'=>'Programmes', 'href'=>'programmes.php','badge'=>null],
 ];
@@ -84,15 +84,44 @@ if (is_admin()) {
     <?php endforeach; ?>
   </nav>
 
-  <!-- User block bottom -->
-  <div class="sidebar-user">
-    <div class="sidebar-user-avatar"><?= $_sb_initials ?></div>
-    <div class="sidebar-user-info">
-      <span class="sidebar-user-name"><?= htmlspecialchars($_sb_name) ?></span>
-      <span class="sidebar-user-role"><?= is_admin() ? 'Administrator' : ucfirst($_sb_utype ?: 'User') ?></span>
+  <!-- Help / Contact card — different content for admin vs users -->
+  <div class="sidebar-help">
+    <?php if (is_admin()): ?>
+    <div class="sidebar-help-title">
+      <i class="ti ti-headset"></i> Admin Support
     </div>
-    <a href="logout.php" class="sidebar-logout" title="Sign out">
+    <a href="tel:+27795343798" class="sidebar-help-item">
+      <i class="ti ti-phone"></i>
+      <span>079 534 3798</span>
+    </a>
+    <a href="mailto:lwandile@researchunlimited.co.za" class="sidebar-help-item">
+      <i class="ti ti-mail"></i>
+      <span>lwandile@researchunlimited.co.za</span>
+    </a>
+    <a href="mailto:it@researchunlimited.co.za" class="sidebar-help-item">
+      <i class="ti ti-device-laptop"></i>
+      <span>IT Team Support</span>
+    </a>
+    <?php else: ?>
+    <div class="sidebar-help-title">
+      <i class="ti ti-lifebuoy"></i> Need Help?
+    </div>
+    <a href="tel:+27795343798" class="sidebar-help-item">
+      <i class="ti ti-phone"></i>
+      <span>079 534 3798</span>
+    </a>
+    <a href="mailto:helpdesk@researchunlimited.co.za" class="sidebar-help-item">
+      <i class="ti ti-mail"></i>
+      <span>helpdesk@researchunlimited.co.za</span>
+    </a>
+    <?php endif; ?>
+  </div>
+
+  <!-- Bottom: just sign out -->
+  <div class="sidebar-signout-bar">
+    <a href="logout.php" class="sidebar-signout-btn">
       <i class="ti ti-logout"></i>
+      <span>Sign Out</span>
     </a>
   </div>
 

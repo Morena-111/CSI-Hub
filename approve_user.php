@@ -1,8 +1,7 @@
 <?php
 if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 /**
- * approve_user.php — Approve/reject user + set their type and linked entity
- * Place in: C:\xampp\htdocs\csi-hub\approve_user.php
+ * approve_user.php
  */
 require_once 'includes/auth.php';
 require_admin_role();

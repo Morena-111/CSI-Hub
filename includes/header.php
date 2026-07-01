@@ -2,6 +2,7 @@
 if (!function_exists('redirect')) require_once __DIR__ . '/../config.php';
 /**
  * header.php
+ * Place in: C:\xampp\htdocs\csi-hub\includes\header.php
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['role'])) { redirect('login.php');  }
@@ -120,8 +121,9 @@ $_notif_count = count($_notifs);
 <title>CSI Hub | Research Unlimited</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<link rel="stylesheet" href="assets/css/main.css">
-<link rel="stylesheet" href="assets/css/modal.css">
+<!-- assets/css/main.css and modal.css intentionally NOT loaded here.
+     All styling lives in the inline <style> block below to guarantee
+     it always wins and never conflicts with old/cached CSS files. -->
 <style>
 /* ══════════════════════════════════════════════════
    CSI Hub — Core Styles (embedded in header.php)
@@ -149,7 +151,7 @@ a{text-decoration:none;color:inherit}
 ══════════════════════════════════════════════ */
 .topnav{
   position:fixed;top:0;left:0;right:0;z-index:100;
-  height:60px;
+  height:68px;
   background:var(--white);
   display:flex;align-items:stretch;
   box-shadow:0 1px 0 #e2e8f0, 0 2px 8px rgba(13,30,61,.06);
@@ -192,24 +194,24 @@ a{text-decoration:none;color:inherit}
 
 /* Centre: search */
 .topnav-centre{
-  flex:1;display:flex;align-items:center;
-  justify-content:center;padding:0 24px;
+  flex:1;display:flex;align-items:center;gap:20px;
+  justify-content:flex-start;gap:16px;padding:0 24px;
   position:relative;z-index:2;
 }
 .topnav-search-wrap{
-  position:relative;width:100%;max-width:440px;
+  position:relative;flex:1;max-width:340px;
 }
 .topnav-search-icon{
-  position:absolute;left:13px;top:50%;
+  position:absolute;left:11px;top:50%;
   transform:translateY(-50%);
-  font-size:15px;color:var(--text-light);
+  font-size:13px;color:var(--text-light);
   pointer-events:none;
 }
 .topnav-search{
-  width:100%;padding:10px 16px 10px 40px;
+  width:100%;padding:9px 14px 9px 36px;
   border:1.5px solid var(--border);
-  border-radius:10px;
-  font-size:13px;font-family:'Poppins',sans-serif;
+  border-radius:9px;
+  font-size:12.5px;font-family:'Poppins',sans-serif;
   color:var(--text);
   background:var(--surface);
   outline:none;transition:all .2s;
@@ -218,11 +220,12 @@ a{text-decoration:none;color:inherit}
 .topnav-search:focus{
   border-color:var(--orange);
   background:var(--white);
-  box-shadow:0 0 0 4px var(--orange-soft);
+  box-shadow:0 0 0 3px var(--orange-soft);
 }
 .topnav-search-results{
   display:none;
   position:absolute;top:calc(100% + 8px);left:0;right:0;
+  min-width:280px;
   background:var(--white);
   border:1px solid var(--border);
   border-radius:12px;
@@ -248,31 +251,54 @@ a{text-decoration:none;color:inherit}
 
 /* Right section */
 .topnav-right{
-  display:flex;align-items:center;gap:4px;
-  padding:0 16px;
+  display:flex;align-items:center;gap:6px;
+  padding:0 20px;
   flex-shrink:0;
   position:relative;z-index:2;
 }
 
-/* M&E link — orange pill */
+/* M&E link — THE hero element of the header.
+   This is the company's core revenue driver, so it must be
+   the single most eye-catching thing in the entire topbar. */
+/* ── M&E BUTTON — clean, professional, branded ── */
 .topnav-me-link{
-  display:inline-flex;align-items:center;gap:7px;
-  font-size:12px;font-weight:700;
-  color:var(--white);
-  padding:9px 18px;border-radius:9px;
-  background:linear-gradient(135deg,var(--orange),var(--orange-mid));
-  white-space:nowrap;
-  transition:all .2s;
+  display:inline-flex;align-items:center;gap:11px;
   text-decoration:none;
-  margin-right:4px;
-  letter-spacing:.02em;
-  box-shadow:0 3px 12px rgba(232,84,26,.3);
+  background:#0d1e3d;
+  border-radius:10px;
+  padding:10px 20px;
+  border:1.5px solid #E8541A;
+  box-shadow:0 3px 14px rgba(13,30,61,.25);
+  transition:all .2s;
+  flex-shrink:0;
 }
-.topnav-me-link i{font-size:15px}
 .topnav-me-link:hover{
   transform:translateY(-1px);
-  box-shadow:0 6px 20px rgba(232,84,26,.4);
-  filter:brightness(1.05);
+  box-shadow:0 6px 22px rgba(13,30,61,.35);
+}
+.me-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(232,84,26,.15);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.me-icon i{font-size:17px;color:#E8541A}
+.me-words{display:flex;flex-direction:column;line-height:1.3}
+.me-title{
+  font-size:13px;font-weight:700;
+  color:#ffffff;white-space:nowrap;
+}
+.me-desc{
+  font-size:9px;color:rgba(255,255,255,.5);
+  font-weight:500;text-transform:uppercase;
+  letter-spacing:.06em;white-space:nowrap;
+  margin-top:1px;
+}
+.me-chip{
+  background:#E8541A;color:#fff;
+  font-size:10px;font-weight:700;
+  padding:3px 7px;border-radius:5px;
+  letter-spacing:.04em;flex-shrink:0;
 }
 
 /* Divider */
@@ -284,7 +310,7 @@ a{text-decoration:none;color:inherit}
 
 /* Icon buttons (bell, signout) */
 .topnav-icon-btn{
-  width:36px;height:36px;border-radius:8px;
+  width:38px;height:38px;border-radius:9px;
   border:none;background:transparent;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   font-size:17px;color:#64748b;
@@ -318,12 +344,16 @@ a{text-decoration:none;color:inherit}
 }
 .topnav-user-btn:hover{background:var(--surface)}
 .topnav-avatar{
-  width:33px;height:33px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,var(--orange),var(--orange-mid));
-  color:#fff;font-size:12px;font-weight:700;
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  background:#E8541A;
+  color:#ffffff !important;
+  font-size:13px;font-weight:800;
   display:flex;align-items:center;justify-content:center;
-  letter-spacing:.02em;
-  box-shadow:0 2px 10px rgba(232,84,26,.35);
+  letter-spacing:.05em;
+  box-shadow:0 2px 8px rgba(232,84,26,.4);
+  text-transform:uppercase;
+  font-family:'Poppins',sans-serif;
+  line-height:1;
 }
 .topnav-user-name{
   font-size:12.5px;font-weight:600;
@@ -396,12 +426,12 @@ a{text-decoration:none;color:inherit}
    240px wide. White bg with right border.
 ──────────────────────────────────────────────── */
 .sidebar{
-  width:240px;flex-shrink:0;
+  width:260px;flex-shrink:0;
   background:var(--white);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  position:fixed;top:60px;left:0;
-  height:calc(100vh - 60px);
+  position:fixed;top:68px;left:0;
+  height:calc(100vh - 68px);
   overflow-y:auto;z-index:50;
   /* thin, unobtrusive scrollbar instead of default thick one */
   scrollbar-width:thin;
@@ -468,35 +498,55 @@ a{text-decoration:none;color:inherit}
   flex-shrink:0;
 }
 
-/* Sidebar user block — bottom */
-.sidebar-user{
-  display:flex;align-items:center;gap:10px;
-  padding:12px 16px;
+/* Sidebar help / contact card — sits above the user block,
+   styled like the support widgets on big SaaS platforms
+   (Intercom, Zendesk-style sidebar contact card) */
+.sidebar-help{
+  margin:10px 12px 6px;
+  padding:13px 14px;
+  background:linear-gradient(135deg,#fff7ed 0%,var(--orange-soft) 100%);
+  border:1px solid rgba(232,84,26,.18);
+  border-radius:12px;
+}
+.sidebar-help-title{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.04em;
+  margin-bottom:9px;
+}
+.sidebar-help-title i{font-size:14px}
+.sidebar-help-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:11.5px;font-weight:500;color:#7c4a2d;
+  padding:5px 0;
+  text-decoration:none;
+  transition:color .15s;
+}
+.sidebar-help-item:hover{color:var(--orange)}
+.sidebar-help-item i{font-size:13px;flex-shrink:0;color:var(--orange);opacity:.75}
+.sidebar-help-item span{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Sidebar sign out bar — bottom */
+.sidebar-signout-bar{
+  padding:12px;
   border-top:1px solid var(--border);
   margin-top:auto;
 }
-.sidebar-user-avatar{
-  width:32px;height:32px;border-radius:50%;flex-shrink:0;
-  background:var(--orange);color:#fff;
-  font-size:11px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
+.sidebar-signout-btn{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 14px;border-radius:9px;
+  font-size:12.5px;font-weight:600;
+  color:var(--text-muted);text-decoration:none;
+  transition:all .15s;
+  width:100%;
 }
-.sidebar-user-info{
-  flex:1;min-width:0;
-  display:flex;flex-direction:column;line-height:1.3;
+.sidebar-signout-btn i{font-size:16px;color:var(--text-muted)}
+.sidebar-signout-btn:hover{
+  background:#fde9e9;color:#c53030;
 }
-.sidebar-user-name{
-  font-size:12px;font-weight:600;color:var(--text);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.sidebar-user-role{font-size:10px;color:var(--text-muted)}
-.sidebar-logout{
-  width:28px;height:28px;border-radius:7px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:15px;color:var(--text-muted);
-  transition:all .12s;text-decoration:none;
-}
-.sidebar-logout:hover{background:#fde9e9;color:#c53030}
+.sidebar-signout-btn:hover i{color:#c53030}
 
 /* ── LAYOUT ──────────────────────────────────────
    .layout wraps sidebar + main content.
@@ -504,15 +554,15 @@ a{text-decoration:none;color:inherit}
 ──────────────────────────────────────────────── */
 .layout{
   display:flex;
-  height:calc(100vh - 60px);
-  margin-top:60px;
+  height:calc(100vh - 68px);
+  margin-top:68px;
   overflow:hidden;
 }
 .main{
   flex:1;
   min-width:0;
   padding:28px 32px;
-  margin-left:240px;
+  margin-left:260px;
   height:100%;
   overflow-y:auto;
   scrollbar-width:thin;
@@ -776,29 +826,36 @@ textarea.form-input{resize:vertical;min-height:80px}
     </a>
   </div>
 
-  <!-- CENTRE: Search -->
+  <!-- CENTRE: Creative M&E pill + search -->
   <div class="topnav-centre">
+
+    <a href="programmes.php" class="topnav-me-link">
+      <div class="me-icon"><i class="ti ti-activity"></i></div>
+      <div class="me-words">
+        <span class="me-title">Monitoring &amp; Evaluation</span>
+        <span class="me-desc">Our Core Service</span>
+      </div>
+      <div class="me-chip">M&amp;E</div>
+    </a>
+
+    <!-- Search — compact, integrated feel -->
     <div class="topnav-search-wrap">
       <i class="ti ti-search topnav-search-icon"></i>
       <input type="text" class="topnav-search" id="global-search"
-        placeholder="Search partners, schools, documents…"
+        placeholder="Search partners, schools, docs…"
         autocomplete="off"
         oninput="globalSearch(this.value)"
         onfocus="showResults()"
         onblur="setTimeout(hideResults,200)">
       <div class="topnav-search-results" id="search-results"></div>
     </div>
+
   </div>
 
-  <!-- RIGHT: M&E + bell + user + signout -->
+  <!-- RIGHT: bell + avatar (no name, no signout here) -->
   <div class="topnav-right">
-
-    <a href="programmes.php" class="topnav-me-link">
-      <i class="ti ti-activity"></i>
-      <span>M&amp;E Programmes</span>
-    </a>
-
     <div class="topnav-divider"></div>
+
 
     <!-- Notification bell -->
     <div class="topnav-notif-wrap" id="notif-wrap">
@@ -840,9 +897,17 @@ textarea.form-input{resize:vertical;min-height:80px}
     </div>
 
     <!-- User avatar → profile -->
-    <a href="profile.php" class="topnav-user-btn" title="Edit profile">
-      <span class="topnav-avatar"><?= $_hn_initials ?></span>
-      <span class="topnav-user-name"><?= htmlspecialchars($_hn_name) ?></span>
+    <a href="profile.php" class="topnav-user-btn" title="My Profile">
+      <div class="topnav-avatar">
+        <?php
+          // Compute initials fresh here as fallback
+          $_av_name = $_SESSION['name'] ?? $_SESSION['username'] ?? 'U';
+          $_av_parts = explode(' ', trim($_av_name));
+          $_av_init = '';
+          foreach(array_slice($_av_parts,0,2) as $p) $_av_init .= strtoupper(substr($p,0,1));
+          echo htmlspecialchars($_av_init ?: 'U');
+        ?>
+      </div>
     </a>
 
     <!-- Sign out -->

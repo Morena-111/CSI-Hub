@@ -1,6 +1,6 @@
 <?php
 /**
- * search.php
+ * search.php — Global search API
  */
 require_once 'includes/auth.php';
 require_once 'includes/db.php';

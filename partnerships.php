@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'update_
 
 // ── FETCH DATA ───────────────────────────────────────────────
 $pw_sql = "
-    SELECT p.*, c.name AS company_name, c.initials AS company_initials, c.sector,
+    SELECT p.*, c.name AS company_name, c.sector,
            s.name AS school_name, s.province, s.location
     FROM partnerships p
     JOIN companies c ON c.id = p.company_id
