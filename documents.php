@@ -11,6 +11,7 @@ $success_msg = '';
 $error_msg   = '';
 
 // ── HANDLE UPLOAD ────────────────────────────────────────────
+// Only users (not admin) can upload — admin reviews what users submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'upload' && !is_admin()) {
     $file = $_FILES['document'] ?? null;
 

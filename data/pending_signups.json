@@ -1,20 +1,71 @@
 {
-  "mafavuke": {
-    "name": "LWANDISWA CWELE",
-    "org": "Research Unlimited",
-    "email": "lwandiswacwele4@gmail.com",
-    "password": "Impisi.mafavuke_1317",
-    "role": "user",
-    "approved": true,
-    "created": "2026-06-08 16:37:43"
-  },
-  "carol": {
-    "name": "Mandisa",
-    "org": "UJ",
-    "email": "sisandacarol@gmail.com",
-    "password": "MandisaKhumalo_1317",
-    "role": "user",
-    "approved": true,
-    "created": "2026-06-08 20:01:38"
-  }
+    "mafavuke": {
+        "name": "LWANDISWA CWELE",
+        "org": "Research Unlimited",
+        "email": "lwandiswacwele4@gmail.com",
+        "password": "Impisi.mafavuke_1317",
+        "role": "user",
+        "approved": true,
+        "created": "2026-06-08 16:37:43"
+    },
+    "carol": {
+        "name": "Mandisa",
+        "org": "UJ",
+        "email": "sisandacarol@gmail.com",
+        "password": "MandisaKhumalo_1317",
+        "role": "user",
+        "approved": true,
+        "created": "2026-06-08 20:01:38"
+    },
+    "rucsi": {
+        "name": "Lwandiswa Cwele",
+        "org": "Research Unlimited",
+        "email": "",
+        "phone": "",
+        "id_number": "",
+        "password": "RUCSI@2026",
+        "user_type": "company",
+        "approved": false,
+        "created": "2026-07-04 14:12:58",
+        "reg_number": "0795343798",
+        "contact_person": "Lwandiswa Cwele",
+        "csi_budget": "45000",
+        "focus_areas": "STEM,Health & Nutrition",
+        "provinces": "KwaZulu-Natal,North West",
+        "programme_pref": "We Run It"
+    },
+    "maria": {
+        "name": "Maria Radebe",
+        "org": "Absa Bank",
+        "email": "maria@absa.co.za",
+        "phone": "0640323932",
+        "id_number": "",
+        "password": "Maria@2026",
+        "user_type": "company",
+        "approved": false,
+        "created": "2026-07-04 19:07:53",
+        "reg_number": "2021\/0048\/17",
+        "contact_person": "Maria Radebe",
+        "csi_budget": "200 000",
+        "focus_areas": "STEM,Arts & Culture",
+        "provinces": "KwaZulu-Natal,Limpopo",
+        "programme_pref": "Bronze Package"
+    },
+    "csi@m&l": {
+        "name": "Mdumiseni",
+        "org": "M&L TECH",
+        "email": "mdumiseni@tech.co.za",
+        "phone": "0640323934",
+        "id_number": "",
+        "password": "CSI@M&L2026",
+        "user_type": "company",
+        "approved": false,
+        "created": "2026-07-06 08:27:48",
+        "reg_number": "2025\/1158\/01",
+        "contact_person": "Mdumiseni",
+        "csi_budget": "500 000",
+        "focus_areas": "STEM,Literacy",
+        "provinces": "Gauteng,KwaZulu-Natal",
+        "programme_pref": "We Run It"
+    }
 }

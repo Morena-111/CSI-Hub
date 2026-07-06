@@ -1,7 +1,6 @@
 <?php
 /**
  * sidebar.php
- * Place in: C:\xampp\htdocs\csi-hub\includes\sidebar.php
  */
 
 // Determine user type label
@@ -40,7 +39,8 @@ $nav['OVERVIEW'] = [
 // ── MANAGEMENT ──────────────────────────────────────────────
 $nav['MANAGEMENT'] = [
     ['key'=>'partners',  'icon'=>'ti-users',        'label'=>'Partners',   'href'=>'partners.php',  'badge'=>null],
-    ['key'=>'schools',   'icon'=>'ti-school',        'label'=>'Schools',    'href'=>'schools.php',   'badge'=>null],
+    ['key'=>'schools',      'icon'=>'ti-school',          'label'=>'Schools',      'href'=>'schools.php',      'badge'=>null],
+    ['key'=>'school_needs', 'icon'=>'ti-heart-handshake', 'label'=>'School Needs', 'href'=>'school_needs.php', 'badge'=>null],
     ['key'=>'documents', 'icon'=>'ti-file-invoice',  'label'=>'Documents',  'href'=>'documents.php', 'badge'=>(int)$badge_docs ?: null],
     ['key'=>'doc_wizard', 'icon'=>'ti-checklist',      'label'=>'Submit Docs', 'href'=>'document_wizard.php', 'badge'=>null],
     ['key'=>'events',    'icon'=>'ti-calendar',      'label'=>'Events',     'href'=>'events.php',    'badge'=>(int)$badge_events ?: null],

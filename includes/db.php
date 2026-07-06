@@ -1,6 +1,6 @@
 <?php
 /**
- * db.php — Database connection
+ * db.php
  */
 
 if (!defined('DB_HOST')) {

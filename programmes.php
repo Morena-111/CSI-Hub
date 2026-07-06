@@ -5,248 +5,404 @@ require_once 'includes/db.php';
 
 $enquiry_success = '';
 
-// Handle enquiry form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $to   = 'info@researchunlimitedsa.co.za';
-    $type = $_POST['enquiry_type'] ?? 'general';
-
-    if ($type === 'run') {
-        $company  = htmlspecialchars($_POST['company'] ?? '');
-        $contact  = htmlspecialchars($_POST['contact'] ?? '');
-        $email    = htmlspecialchars($_POST['email'] ?? '');
-        $budget   = htmlspecialchars($_POST['budget'] ?? '');
-        $schools  = htmlspecialchars($_POST['schools'] ?? '');
-        $message  = htmlspecialchars($_POST['message'] ?? '');
-        $subject  = "CSI Enquiry — We Run It — {$company}";
-        $body     = "Company: {$company}\nContact: {$contact}\nEmail: {$email}\nBudget: R{$budget}\nSchools: {$schools}\nMessage: {$message}";
-    } else {
-        $company  = htmlspecialchars($_POST['company'] ?? '');
-        $pkg      = htmlspecialchars($_POST['package'] ?? '');
-        $email    = htmlspecialchars($_POST['email'] ?? '');
-        $province = htmlspecialchars($_POST['province'] ?? '');
-        $subject  = "CSI Package Request — {$pkg} — {$company}";
-        $body     = "Company: {$company}\nPackage: {$pkg}\nEmail: {$email}\nProvince: {$province}";
-    }
-
+    $type    = $_POST['enquiry_type'] ?? 'general';
+    $company = htmlspecialchars($_POST['company'] ?? '');
+    $contact = htmlspecialchars($_POST['contact'] ?? '');
+    $email   = htmlspecialchars($_POST['email'] ?? '');
+    $message = htmlspecialchars($_POST['message'] ?? '');
+    $prog    = htmlspecialchars($_POST['programme'] ?? '');
+    $budget  = htmlspecialchars($_POST['budget'] ?? '');
+    $subject = "CSI Hub Enquiry — {$prog} — {$company}";
+    $body    = "Company: {$company}\nContact: {$contact}\nEmail: {$email}\nProgramme: {$prog}\nBudget: R{$budget}\nMessage: {$message}";
     $headers = "From: noreply@researchunlimitedsa.co.za\r\nReply-To: {$email}\r\n";
-    @mail($to, $subject, $body, $headers);
-    $enquiry_success = $type === 'run'
-        ? "Enquiry sent! We will contact you within 2 business days."
-        : "Package request sent! We will be in touch shortly.";
+    @mail('info@researchunlimitedsa.co.za', $subject, $body, $headers);
+    $enquiry_success = "Thank you! We will contact you within 2 business days.";
 }
+
+$is_company = (!is_admin() && ($_SESSION['user_type']??'') === 'company');
+$linked_id  = (int)($_SESSION['linked_id'] ?? 0);
+
+$my_partnerships = [];
+if ($is_company && $linked_id) {
+    $st = $pdo->prepare("
+        SELECT p.*, s.name AS school_name, s.province,
+               DATEDIFF(p.end_date, CURDATE()) AS days_left
+        FROM partnerships p
+        JOIN schools s ON s.id = p.school_id
+        WHERE p.company_id = ?
+        ORDER BY p.status ASC, p.start_date DESC
+    ");
+    $st->execute([$linked_id]);
+    $my_partnerships = $st->fetchAll();
+}
+
+// Real RU programmes based on their actual services
+$programmes = [
+    [
+        'icon'    => 'ti-school',
+        'color'   => '#E8541A',
+        'bg'      => '#fdf0ea',
+        'title'   => 'CSI Research & Monitoring',
+        'tag'     => 'Core Service',
+        'desc'    => 'Research Unlimited designs and conducts research-driven CSI programmes for corporate partners. We use data-informed approaches to measure impact, track learner outcomes, and produce credible evidence of social change.',
+        'items'   => ['Programme design & needs analysis','Baseline & endline assessments','Monthly monitoring visits to schools','Impact measurement & evaluation','BBBEE compliance documentation','Quarterly & annual impact reports'],
+    ],
+    [
+        'icon'    => 'ti-book',
+        'color'   => '#6c5ce7',
+        'bg'      => '#f0eeff',
+        'title'   => 'Education Research Programme',
+        'tag'     => 'Education Focus',
+        'desc'    => 'Focused on the SDGs, we design educational awareness programmes addressing critical skills gaps. We showcase and communicate education policy within the education and social space — from early grades through to matric.',
+        'items'   => ['STEM & Mathematics support programmes','Literacy & reading interventions','Life skills & career readiness','Teacher development workshops','E3 Entrepreneurship, Employability & Education','Curriculum-aligned educational content'],
+    ],
+    [
+        'icon'    => 'ti-chart-bar',
+        'color'   => '#00956a',
+        'bg'      => '#e6faf5',
+        'title'   => 'Business Research CSI',
+        'tag'     => 'Business Intelligence',
+        'desc'    => 'We provide detailed researched data analysis to help companies maximise their CSI investment. From community needs assessments to ROI on social investment, we turn data into decisions.',
+        'items'   => ['Community needs assessments','CSI strategy development','Social return on investment (SROI) analysis','Stakeholder mapping & engagement','Policy research & reporting','NPO & NGO partnership facilitation'],
+    ],
+    [
+        'icon'    => 'ti-users',
+        'color'   => '#2dbcd8',
+        'bg'      => '#e8f8fc',
+        'title'   => 'Tutoring & Academic Support',
+        'tag'     => 'Academic Development',
+        'desc'    => 'Our qualified and experienced tutors provide comprehensive online, home-based and office-based tutoring and consultation services to learners at beneficiary schools — from Grade 1 through to postgraduate level.',
+        'items'   => ['Home-based & online tutoring','Mathematics & Science focus','Academic consultation services','Postgraduate research support','Group tutoring sessions at schools','Progress tracking & reporting to funders'],
+    ],
+    [
+        'icon'    => 'ti-briefcase',
+        'color'   => '#f5a623',
+        'bg'      => '#fffbea',
+        'title'   => 'Skills Development Programme',
+        'tag'     => 'Youth Empowerment',
+        'desc'    => 'Supporting SDG goals, we run skills development programmes targeting youth and women. From entrepreneurship skills to employability training, we invest in building a more resilient and equitable society.',
+        'items'   => ['Youth entrepreneurship training','Employability & workplace readiness','Digital skills & technology literacy','Women empowerment workshops','Job creation awareness programmes','Linkage to SETA & accredited training'],
+    ],
+    [
+        'icon'    => 'ti-report-analytics',
+        'color'   => '#0d1e3d',
+        'bg'      => '#eef1f6',
+        'title'   => 'M&E Reporting & Compliance',
+        'tag'     => 'Reporting',
+        'desc'    => 'Research Unlimited produces credible, professional M&E reports for corporate partners to satisfy board requirements, BBBEE scorecards, and shareholder reporting. Quality, reliability and results — every report.',
+        'items'   => ['BBBEE socio-economic development reports','Annual CSI impact reports','Site visit reports with photographic evidence','Learner & educator headcount verification','Financial expenditure tracking','Board-ready presentation packs'],
+    ],
+];
 
 include 'includes/header.php';
 ?>
-
 <div class="layout">
 <?php include 'includes/sidebar.php'; ?>
-
 <main class="main">
 
-  <div class="page-banner">
-    <i class="ti ti-home" style="font-size:13px"></i>
-    <span style="color:var(--text-muted)">Home</span>
-    <span style="color:var(--border)">›</span>
-    <span class="active-crumb">Our Programmes</span>
-  </div>
+<div class="page-banner">
+  <i class="ti ti-home" style="font-size:13px"></i>
+  <span style="color:var(--text-muted)">Home</span>
+  <span style="color:var(--border)">›</span>
+  <span class="active-crumb">Programmes</span>
+</div>
 
-  <div class="page-header">
+<?php if ($enquiry_success): ?>
+<div style="background:var(--teal-soft);border:1px solid #a7e9d3;color:#054d36;border-radius:10px;
+            padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500">
+  <i class="ti ti-circle-check" style="font-size:18px"></i><?= htmlspecialchars($enquiry_success) ?>
+</div>
+<?php endif; ?>
+
+<?php if ($is_company && !empty($my_partnerships)): ?>
+<!-- ══ COMPANY USER — MY ACTIVE PROGRAMMES ══ -->
+<div class="page-header">
+  <div>
+    <h1>My Programmes</h1>
+    <p>Your active CSI programmes managed by Research Unlimited</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('enquire-modal')">
+    <i class="ti ti-plus"></i> Enquire About More
+  </button>
+</div>
+
+<!-- Stats -->
+<?php
+$active_c = count(array_filter($my_partnerships, fn($p)=>$p['status']==='active'));
+$total_v  = array_sum(array_column($my_partnerships,'amount'));
+$school_c = count(array_unique(array_column($my_partnerships,'school_id')));
+?>
+<div class="stats-row" style="margin-bottom:22px">
+  <div class="stat-card orange">
+    <div class="stat-label">Active Programmes</div>
+    <div class="stat-value orange"><?= $active_c ?></div>
+    <div class="stat-sub">Currently running</div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-label">Schools Reached</div>
+    <div class="stat-value teal"><?= $school_c ?></div>
+    <div class="stat-sub">Beneficiary schools</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-label">Total Investment</div>
+    <div class="stat-value" style="color:var(--gold)">R<?= number_format($total_v/1000000,2) ?>M</div>
+    <div class="stat-sub">CSI committed</div>
+  </div>
+</div>
+
+<!-- Horizontal partnership cards -->
+<div style="display:flex;flex-direction:column;gap:14px">
+<?php foreach($my_partnerships as $p):
+  $s  = strtotime($p['start_date']); $e = strtotime($p['end_date']); $now = time();
+  $pg = $p['status']==='completed'?100:($p['status']==='pending'?0:($now>=$e?100:($now<=$s?0:round(($now-$s)/($e-$s)*100))));
+  $dl = (int)$p['days_left'];
+  $sc = ['active'=>['#e6faf5','#00956a'],'pending'=>['#fffbea','#9a6700'],'completed'=>['#f1f5f9','#64748b'],'paused'=>['#fde9e9','#c53030']][$p['status']] ?? ['#f1f5f9','#64748b'];
+?>
+<div style="background:white;border:1px solid var(--border);border-radius:13px;
+            display:flex;align-items:stretch;overflow:hidden;
+            box-shadow:0 1px 8px rgba(26,31,46,.05)">
+  <!-- accent -->
+  <div style="width:5px;background:var(--orange);flex-shrink:0"></div>
+  <!-- school + progress -->
+  <div style="padding:16px 20px;flex:2;border-right:1px solid var(--border)">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">
+          <?= htmlspecialchars($p['focus_area']) ?>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)"><?= htmlspecialchars($p['school_name']) ?></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+          <i class="ti ti-map-pin" style="font-size:12px"></i> <?= htmlspecialchars($p['province']) ?>
+        </div>
+      </div>
+      <span style="background:<?= $sc[0] ?>;color:<?= $sc[1] ?>;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">
+        <?= ucfirst($p['status']) ?>
+      </span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1;height:6px;background:var(--border);border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:<?= $pg ?>%;background:<?= $pg>=100?'var(--teal)':'var(--orange)' ?>;border-radius:6px"></div>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:var(--orange);flex-shrink:0"><?= $pg ?>%</span>
+    </div>
+  </div>
+  <!-- dates -->
+  <div style="padding:16px 18px;flex:1;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:6px">
     <div>
-      <h1>Our Programmes</h1>
-      <p>Choose how Research Unlimited can deliver the CSI programme for your company</p>
+      <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Start</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--text)"><?= date('d M Y',strtotime($p['start_date'])) ?></div>
+    </div>
+    <div>
+      <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">End</div>
+      <div style="font-size:12.5px;font-weight:600;color:<?= $dl<30&&$p['status']==='active'?'#c53030':'var(--text)' ?>">
+        <?= date('d M Y',strtotime($p['end_date'])) ?>
+        <?php if($dl>0&&$p['status']==='active'): ?><span style="font-size:10px;color:<?= $dl<30?'#c53030':'var(--text-muted)' ?>"> · <?= $dl ?>d left</span><?php endif; ?>
+      </div>
     </div>
   </div>
-
-  <?php if ($enquiry_success): ?>
-  <div style="background:#e6faf5;border:1px solid #a7e9d3;color:#054d36;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:8px;font-size:13px">
-    <i class="ti ti-circle-check" style="font-size:16px"></i> <?= htmlspecialchars($enquiry_success) ?>
+  <!-- amount -->
+  <div style="padding:16px 18px;flex:1;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Investment</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--orange)">R<?= number_format($p['amount']) ?></div>
   </div>
-  <?php endif; ?>
+  <!-- actions -->
+  <div style="padding:16px 14px;display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:110px">
+    <a href="partnerships.php?partner_id=<?= $linked_id ?>" class="btn btn-primary" style="font-size:11.5px;padding:6px 12px;justify-content:center">
+      <i class="ti ti-eye"></i> Details
+    </a>
+    <a href="documents.php" class="btn btn-secondary" style="font-size:11.5px;padding:6px 12px;justify-content:center">
+      <i class="ti ti-file"></i> Docs
+    </a>
+  </div>
+</div>
+<?php endforeach; ?>
+</div>
 
-  <!-- TWO OPTIONS -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px">
+<?php else: ?>
+<!-- ══ ADMIN / ALL USERS — FULL PROGRAMME CATALOGUE ══ -->
+<div class="page-header">
+  <div>
+    <h1>Our Programmes</h1>
+    <p>Research Unlimited — Research Made Easy · <a href="https://researchunlimitedsa.co.za" target="_blank" style="color:var(--orange)">researchunlimitedsa.co.za</a></p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('enquire-modal')">
+    <i class="ti ti-send"></i> Enquire Now
+  </button>
+</div>
 
-    <!-- Option 1: We Run It -->
-    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;overflow:hidden">
-      <div style="background:var(--navy);padding:28px 28px 20px">
-        <div style="width:52px;height:52px;background:var(--orange);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;margin-bottom:16px">
-          <i class="ti ti-rocket"></i>
-        </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:white;margin-bottom:6px">We Run It For You</h2>
-        <p style="font-size:13px;color:rgba(255,255,255,.55);line-height:1.6">Research Unlimited designs, manages and reports on the full CSI programme on your behalf.</p>
+<!-- Company intro banner -->
+<div style="background:linear-gradient(120deg,#0d1e3d 0%,#1a3560 60%,#0d1e3d 100%);
+            border-radius:14px;padding:28px 32px;margin-bottom:28px;
+            display:flex;align-items:center;gap:28px;flex-wrap:wrap">
+  <div style="flex:1;min-width:260px">
+    <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.45);
+                text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">
+      100% Black-owned &amp; Female-owned · B-BBEE Level 1
+    </div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:white;
+               margin-bottom:10px;line-height:1.3">
+      Research Unlimited is an African education research consultancy focused on CSI, education and business research.
+    </h2>
+    <p style="font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.7;max-width:520px">
+      We design, implement and monitor high-impact CSI programmes that address critical skills gaps and societal challenges — aligned to the Sustainable Development Goals (SDGs) and the South African DBE's E³ initiative.
+    </p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
+    <?php foreach([
+      ['ti-shield-check','B-BBEE Level 1 Contributor'],
+      ['ti-users','Serving undergrads, postgrads, NGOs & businesses'],
+      ['ti-map-pin','All 9 provinces — nationwide reach'],
+      ['ti-award','5+ years field research experience'],
+    ] as [$ico,$txt]): ?>
+    <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:rgba(255,255,255,.75)">
+      <i class="ti <?= $ico ?>" style="color:var(--orange);font-size:15px;flex-shrink:0"></i>
+      <?= $txt ?>
+    </div>
+    <?php endforeach; ?>
+    <div style="margin-top:6px;display:flex;gap:10px">
+      <a href="tel:+27680245514" style="font-size:12px;color:var(--orange);text-decoration:none;display:flex;align-items:center;gap:5px">
+        <i class="ti ti-phone"></i> +27 68 024 5514
+      </a>
+      <a href="mailto:info@researchunlimitedsa.co.za" style="font-size:12px;color:rgba(255,255,255,.55);text-decoration:none;display:flex;align-items:center;gap:5px">
+        <i class="ti ti-mail"></i> info@researchunlimitedsa.co.za
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRAMME GRID — horizontal cards -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <?php foreach($programmes as $i => $prog): ?>
+  <div style="background:white;border:1px solid var(--border);border-radius:13px;
+              display:flex;align-items:stretch;overflow:hidden;
+              box-shadow:0 1px 8px rgba(26,31,46,.05);
+              transition:box-shadow .15s"
+       onmouseenter="this.style.boxShadow='0 4px 20px rgba(26,31,46,.1)'"
+       onmouseleave="this.style.boxShadow='0 1px 8px rgba(26,31,46,.05)'">
+
+    <!-- Left colour block with icon -->
+    <div style="width:90px;flex-shrink:0;background:<?= $prog['bg'] ?>;
+                display:flex;flex-direction:column;align-items:center;
+                justify-content:center;gap:8px;padding:20px 0">
+      <div style="width:44px;height:44px;border-radius:12px;
+                  background:<?= $prog['color'] ?>;
+                  display:flex;align-items:center;justify-content:center">
+        <i class="ti <?= $prog['icon'] ?>" style="font-size:20px;color:white"></i>
       </div>
-      <div style="padding:24px 28px">
-        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
-          <?php foreach([
-            'Full programme design & implementation',
-            'School selection & onboarding',
-            'Monthly site visits & monitoring',
-            'Quarterly impact reports',
-            'BBBEE compliance documentation',
-            'Dedicated CSI coordinator assigned',
-          ] as $feat): ?>
-          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)">
-            <i class="ti ti-circle-check" style="color:var(--teal);font-size:16px;flex-shrink:0"></i>
-            <?= $feat ?>
-          </div>
+      <span style="font-size:9px;font-weight:700;color:<?= $prog['color'] ?>;
+                   text-transform:uppercase;letter-spacing:.05em;text-align:center;
+                   padding:0 6px;line-height:1.3"><?= $prog['tag'] ?></span>
+    </div>
+
+    <!-- Description -->
+    <div style="padding:18px 22px;flex:1.2;border-right:1px solid var(--border)">
+      <h3 style="font-size:14.5px;font-weight:700;color:var(--text);margin-bottom:7px">
+        <?= htmlspecialchars($prog['title']) ?>
+      </h3>
+      <p style="font-size:12.5px;color:var(--text-muted);line-height:1.65">
+        <?= htmlspecialchars($prog['desc']) ?>
+      </p>
+    </div>
+
+    <!-- Feature list -->
+    <div style="padding:18px 20px;flex:1;border-right:1px solid var(--border)">
+      <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;
+                  letter-spacing:.06em;margin-bottom:10px">What's included</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <?php foreach($prog['items'] as $item): ?>
+        <div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--text)">
+          <i class="ti ti-check" style="color:<?= $prog['color'] ?>;font-size:13px;flex-shrink:0;margin-top:1px"></i>
+          <?= htmlspecialchars($item) ?>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="padding:18px 16px;display:flex;flex-direction:column;
+                align-items:center;justify-content:center;gap:8px;min-width:120px">
+      <button class="btn btn-primary"
+              style="font-size:12px;padding:8px 16px;justify-content:center;width:100%"
+              onclick="document.getElementById('enquire-prog').value='<?= htmlspecialchars($prog['title'],ENT_QUOTES) ?>';openModal('enquire-modal')">
+        <i class="ti ti-send"></i> Enquire
+      </button>
+      <div style="font-size:10.5px;color:var(--text-muted);text-align:center;line-height:1.4">
+        Quoted based on scope and number of schools
+      </div>
+    </div>
+
+  </div>
+  <?php endforeach; ?>
+</div>
+
+<!-- Bottom CTA banner -->
+<div style="background:var(--orange-soft);border:1px solid rgba(232,84,26,.2);
+            border-radius:14px;padding:24px 28px;margin-top:24px;
+            display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+  <div>
+    <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">
+      Ready to invest in South Africa's future?
+    </h3>
+    <p style="font-size:12.5px;color:var(--text-muted)">
+      Mon–Sat 8:00am–17:00pm · <a href="tel:+27680245514" style="color:var(--orange);font-weight:600">+27 68 024 5514</a> ·
+      <a href="mailto:info@researchunlimitedsa.co.za" style="color:var(--orange);font-weight:600">info@researchunlimitedsa.co.za</a>
+    </p>
+  </div>
+  <button class="btn btn-primary" style="padding:12px 24px;font-size:13.5px;flex-shrink:0"
+          onclick="openModal('enquire-modal')">
+    <i class="ti ti-rocket"></i> Get Started Today
+  </button>
+</div>
+
+<?php endif; ?>
+
+<!-- ══ ENQUIRY MODAL ══ -->
+<div class="modal-overlay" id="enquire-modal" onclick="if(event.target.id==='enquire-modal')closeModal('enquire-modal')">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('enquire-modal')"><i class="ti ti-x"></i></button>
+    <h2>Programme Enquiry</h2>
+    <div class="modal-sub">Tell us about your CSI goals. We respond within 2 business days.</div>
+    <form method="POST">
+      <input type="hidden" name="enquiry_type" value="programme">
+      <div class="form-group">
+        <label class="form-label">Programme of Interest</label>
+        <select class="form-select" name="programme" id="enquire-prog">
+          <?php foreach($programmes as $pg): ?>
+          <option value="<?= htmlspecialchars($pg['title']) ?>"><?= htmlspecialchars($pg['title']) ?></option>
           <?php endforeach; ?>
-        </div>
-        <div style="background:var(--orange-soft);border-radius:10px;padding:14px 16px;margin-bottom:16px">
-          <div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Management Fee</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text)">10–15% of programme budget</div>
-          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Quoted based on scope and number of schools</div>
-        </div>
-        <?php if (can_edit()): ?>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openModal('enquire-run')">
-          <i class="ti ti-send"></i> Enquire About This Option
-        </button>
-        <?php else: ?>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openModal('enquire-run')">
-          <i class="ti ti-send"></i> Request This Programme
-        </button>
-        <?php endif; ?>
+          <option value="General Enquiry">General Enquiry</option>
+        </select>
       </div>
-    </div>
-
-    <!-- Option 2: Buy / Sponsor -->
-    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;overflow:hidden">
-      <div style="background:linear-gradient(135deg,#00956a,#00c48c);padding:28px 28px 20px">
-        <div style="width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;margin-bottom:16px">
-          <i class="ti ti-shopping-cart"></i>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Company / Organisation *</label>
+          <input class="form-input" type="text" name="company" placeholder="Your company name" required>
         </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:white;margin-bottom:6px">Buy a Programme Package</h2>
-        <p style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.6">Choose a ready-made CSI programme package. You fund it, we deliver it — simple and transparent.</p>
-      </div>
-      <div style="padding:24px 28px">
-
-        <!-- Packages -->
-        <?php foreach([
-          ['Bronze','R150k – R300k','1 school · 1 focus area · Annual report','#b7791f','#fffbea'],
-          ['Silver','R300k – R600k','2–3 schools · 2 focus areas · Quarterly reports','var(--text-muted)','var(--surface)'],
-          ['Gold',  'R600k – R1M+', '5+ schools · Full programme · Monthly reporting','#E8541A','var(--orange-soft)'],
-        ] as [$tier, $range, $desc, $col, $bg]): ?>
-        <div style="background:<?= $bg ?>;border-radius:10px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700;color:<?= $col ?>"><?= $tier ?> Package</span>
-            <span style="font-size:12.5px;font-weight:700;color:var(--text)"><?= $range ?></span>
-          </div>
-          <div style="font-size:12px;color:var(--text-muted)"><?= $desc ?></div>
+        <div class="form-group">
+          <label class="form-label">Contact Person *</label>
+          <input class="form-input" type="text" name="contact" placeholder="Full name" required>
         </div>
-        <?php endforeach; ?>
-
-        <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:6px;border-color:var(--teal);color:var(--teal)" onclick="openModal('enquire-buy')">
-          <i class="ti ti-package"></i> Choose a Package
-        </button>
       </div>
-    </div>
-  </div>
-
-  <!-- PROCESS STEPS -->
-  <div class="widget">
-    <div class="widget-title"><i class="ti ti-list-check"></i> How It Works</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;padding:8px 0">
-      <?php foreach([
-        ['1','ti-phone','Initial Consultation','We meet to understand your CSI goals and budget'],
-        ['2','ti-file-description','Programme Design','We design a tailored programme aligned to your B-BBEE goals'],
-        ['3','ti-school','School Selection','We identify and onboard suitable beneficiary schools'],
-        ['4','ti-rocket','Implementation','Programme launches with trained facilitators on-site'],
-        ['5','ti-chart-bar','Monitoring','Monthly visits, data collection and learner tracking'],
-        ['6','ti-file-analytics','Reporting','Quarterly and annual impact reports for your records'],
-      ] as [$num, $icon, $title, $desc]): ?>
-      <div style="text-align:center;padding:10px">
-        <div style="width:44px;height:44px;background:var(--orange-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:20px;color:var(--orange)">
-          <i class="ti <?= $icon ?>"></i>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input class="form-input" type="email" name="email" placeholder="you@company.co.za" required>
         </div>
-        <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Step <?= $num ?></div>
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px"><?= $title ?></div>
-        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5"><?= $desc ?></div>
+        <div class="form-group">
+          <label class="form-label">Estimated Budget (R)</label>
+          <input class="form-input" type="text" name="budget" placeholder="e.g. 500 000">
+        </div>
       </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-
-</main>
-</div>
-
-<!-- ENQUIRE: WE RUN IT -->
-<div class="modal-overlay" id="enquire-run" onclick="if(event.target.id==='enquire-run')closeModal('enquire-run')">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('enquire-run')"><i class="ti ti-x"></i></button>
-    <h2>Enquire — We Run It For You</h2>
-    <div class="modal-sub">Tell us about your CSI goals and we'll put together a proposal.</div>
-    <div class="form-group">
-      <label class="form-label">Company Name</label>
-      <input class="form-input" type="text" placeholder="Your company or foundation">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Contact Person</label>
-      <input class="form-input" type="text" placeholder="Full name">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input class="form-input" type="email" placeholder="you@company.co.za">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Estimated Budget (R)</label>
-      <input class="form-input" type="text" placeholder="e.g. 500 000">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Number of Schools in Mind</label>
-      <select class="form-select">
-        <option>1–2 schools</option><option>3–5 schools</option><option>6–10 schools</option><option>10+ schools</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Message / Requirements</label>
-      <textarea class="form-input" rows="3" placeholder="Any specific focus areas, provinces or goals?"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-secondary" onclick="closeModal('enquire-run')">Cancel</button>
-      <button type="submit" class="btn btn-primary">
-        <i class="ti ti-send"></i> Send Enquiry
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ENQUIRE: BUY PACKAGE -->
-<div class="modal-overlay" id="enquire-buy" onclick="if(event.target.id==='enquire-buy')closeModal('enquire-buy')">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('enquire-buy')"><i class="ti ti-x"></i></button>
-    <h2>Choose a Package</h2>
-    <div class="modal-sub">Select a package that fits your budget and goals.</div>
-    <div class="form-group">
-      <label class="form-label">Package *</label>
-      <select class="form-select">
-        <option value="">Select package</option>
-        <option>Bronze — R150k to R300k (1 school)</option>
-        <option>Silver — R300k to R600k (2–3 schools)</option>
-        <option>Gold — R600k to R1M+ (5+ schools)</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Company Name</label>
-      <input class="form-input" type="text" placeholder="Your company or foundation">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Contact Email</label>
-      <input class="form-input" type="email" placeholder="you@company.co.za">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Preferred Province</label>
-      <select class="form-select">
-        <option value="">Any province</option>
-        <?php foreach(['Gauteng','KwaZulu-Natal','Western Cape','Eastern Cape','Limpopo','Mpumalanga','North West','Free State','Northern Cape'] as $p): ?>
-          <option><?= $p ?></option>
-        <?php endforeach; ?>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-secondary" onclick="closeModal('enquire-buy')">Cancel</button>
-      <button type="submit" class="btn btn-primary">
-        <i class="ti ti-package"></i> Request Package
-      </button>
-    </div>
+      <div class="form-group">
+        <label class="form-label">Tell us about your goals</label>
+        <textarea class="form-input" name="message" rows="3" placeholder="Number of schools, provinces, focus areas, timeline…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('enquire-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> Send Enquiry</button>
+      </div>
+    </form>
   </div>
 </div>
 

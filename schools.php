@@ -4,7 +4,6 @@ $active_page = 'schools';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
-// ── DATA ISOLATION ────────────────────────────────────────────
 $scope_school = null;
 if (!is_admin()) {
     if (($_SESSION['user_type']??'') === 'company') {

@@ -2,7 +2,6 @@
 if (!function_exists('redirect')) require_once __DIR__ . '/../config.php';
 /**
  * header.php
- * Place in: C:\xampp\htdocs\csi-hub\includes\header.php
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['role'])) { redirect('login.php');  }
@@ -260,46 +259,34 @@ a{text-decoration:none;color:inherit}
 /* M&E link — THE hero element of the header.
    This is the company's core revenue driver, so it must be
    the single most eye-catching thing in the entire topbar. */
-/* ── M&E BUTTON — clean, professional, branded ── */
+/* M&E — simple white button, thin orange border */
 .topnav-me-link{
-  display:inline-flex;align-items:center;gap:11px;
+  display:inline-flex;align-items:center;gap:8px;
   text-decoration:none;
-  background:#0d1e3d;
-  border-radius:10px;
-  padding:10px 20px;
+  background:#ffffff;
+  border-radius:8px;
+  padding:9px 20px;
   border:1.5px solid #E8541A;
-  box-shadow:0 3px 14px rgba(13,30,61,.25);
-  transition:all .2s;
+  transition:all .18s;
   flex-shrink:0;
+  white-space:nowrap;
 }
 .topnav-me-link:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 22px rgba(13,30,61,.35);
+  background:var(--orange-soft);
 }
-.me-icon{
-  width:32px;height:32px;border-radius:8px;
-  background:rgba(232,84,26,.15);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.me-icon i{font-size:17px;color:#E8541A}
-.me-words{display:flex;flex-direction:column;line-height:1.3}
+.me-icon{display:none}
+.me-words{display:flex;flex-direction:column;line-height:1.25}
 .me-title{
   font-size:13px;font-weight:700;
-  color:#ffffff;white-space:nowrap;
+  color:#0d1e3d;white-space:nowrap;
 }
 .me-desc{
-  font-size:9px;color:rgba(255,255,255,.5);
+  font-size:9px;color:var(--text-muted);
   font-weight:500;text-transform:uppercase;
-  letter-spacing:.06em;white-space:nowrap;
+  letter-spacing:.05em;white-space:nowrap;
   margin-top:1px;
 }
-.me-chip{
-  background:#E8541A;color:#fff;
-  font-size:10px;font-weight:700;
-  padding:3px 7px;border-radius:5px;
-  letter-spacing:.04em;flex-shrink:0;
-}
+.me-chip{display:none}
 
 /* Divider */
 .topnav-divider{
@@ -654,7 +641,6 @@ a{text-decoration:none;color:inherit}
 .stat-value.purple{color:var(--purple)}
 .stat-sub{font-size:11.5px;color:var(--text-muted)}
 
-/* ── WIDGETS ─────────────────────────────────── */
 .widget{
   background:var(--white);border:1px solid var(--border);
   border-radius:12px;padding:18px 20px;margin-bottom:18px;
@@ -666,7 +652,6 @@ a{text-decoration:none;color:inherit}
 }
 .widget-title i{font-size:16px;color:var(--orange)}
 
-/* ── DATA TABLES ─────────────────────────────── */
 .data-table{width:100%;border-collapse:collapse}
 .data-table th{
   background:var(--surface);color:var(--text-muted);
@@ -684,7 +669,6 @@ a{text-decoration:none;color:inherit}
 .data-table tr:hover td{background:var(--surface)}
 .cell-name{font-weight:600}
 
-/* ── STATUS BADGES ───────────────────────────── */
 .status-badge{
   display:inline-flex;align-items:center;gap:4px;
   padding:3px 10px;border-radius:20px;
@@ -698,7 +682,6 @@ a{text-decoration:none;color:inherit}
 .status-badge.draft    {background:var(--surface);color:var(--text-muted)}
 .status-badge.closed   {background:var(--surface);color:var(--text-light)}
 
-/* ── TABLE ACTION BUTTONS ────────────────────── */
 .table-action-btn{
   width:30px;height:30px;border-radius:7px;
   border:1px solid var(--border);background:var(--white);
@@ -709,7 +692,6 @@ a{text-decoration:none;color:inherit}
 .table-action-btn:hover{background:var(--surface);color:var(--text)}
 .btn-danger-icon:hover{background:#fde9e9;color:#c53030;border-color:#f5c0c0}
 
-/* ── FORMS ───────────────────────────────────── */
 .form-group {margin-bottom:14px}
 .form-row   {display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-label {
@@ -743,19 +725,15 @@ textarea.form-input{resize:vertical;min-height:80px}
   color:var(--text-light);font-size:15px;pointer-events:none;
 }
 
-/* ── PROGRESS ────────────────────────────────── */
 .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
 .progress-fill{height:100%;background:var(--orange);border-radius:3px;transition:width .3s}
 
-/* ── CARDS GRID ──────────────────────────────── */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .pcard{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:all .15s}
 .pcard:hover{box-shadow:0 4px 16px rgba(26,31,46,.08);transform:translateY(-2px)}
 
-/* ── ADMIN BADGE ─────────────────────────────── */
 .admin-badge{display:inline-flex;align-items:center;gap:5px;background:var(--orange-soft);color:var(--orange);font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:20px}
 
-/* ── TOAST ───────────────────────────────────── */
 .toast{
   position:fixed;bottom:24px;right:24px;z-index:9999;
   background:var(--navy);color:#fff;
@@ -766,7 +744,6 @@ textarea.form-input{resize:vertical;min-height:80px}
 }
 .toast.show{display:flex}
 
-/* ── SETTINGS PAGE ───────────────────────────── */
 .settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
 .settings-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .settings-card-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
@@ -779,7 +756,6 @@ textarea.form-input{resize:vertical;min-height:80px}
 .settings-card-sub  {font-size:12px;color:var(--text-muted);margin-top:2px}
 .settings-card-body {padding:18px 20px}
 
-/* ── MODAL ───────────────────────────────────── */
 .modal-overlay{
   display:none;position:fixed;inset:0;
   background:rgba(13,30,61,.45);
@@ -830,12 +806,10 @@ textarea.form-input{resize:vertical;min-height:80px}
   <div class="topnav-centre">
 
     <a href="programmes.php" class="topnav-me-link">
-      <div class="me-icon"><i class="ti ti-activity"></i></div>
       <div class="me-words">
         <span class="me-title">Monitoring &amp; Evaluation</span>
         <span class="me-desc">Our Core Service</span>
       </div>
-      <div class="me-chip">M&amp;E</div>
     </a>
 
     <!-- Search — compact, integrated feel -->
@@ -900,7 +874,6 @@ textarea.form-input{resize:vertical;min-height:80px}
     <a href="profile.php" class="topnav-user-btn" title="My Profile">
       <div class="topnav-avatar">
         <?php
-          // Compute initials fresh here as fallback
           $_av_name = $_SESSION['name'] ?? $_SESSION['username'] ?? 'U';
           $_av_parts = explode(' ', trim($_av_name));
           $_av_init = '';
@@ -919,7 +892,6 @@ textarea.form-input{resize:vertical;min-height:80px}
 
 </nav>
 <script>
-// Base path — works on both localhost/csi-hub/ and live root /
 const BASE_PATH = '<?= defined("BASE_URL") ? BASE_URL : "/csi-hub/" ?>';
 function toggleNotif() {
   const p = document.getElementById('notif-panel');
@@ -935,7 +907,6 @@ document.addEventListener('click', function(e) {
   if (sw && !sw.contains(e.target)) hideResults();
 });
 
-// ── GLOBAL SEARCH ───────────────────────────────────────────
 let _st = null;
 function globalSearch(q) {
   clearTimeout(_st);
@@ -945,7 +916,6 @@ function globalSearch(q) {
     box.classList.remove('visible');
     return;
   }
-  // Show loading state immediately
   box.innerHTML = '<div class="search-result-empty" style="color:var(--text-muted)"><i class="ti ti-loader" style="font-size:16px;display:block;margin-bottom:6px"></i>Searching…</div>';
   box.classList.add('visible');
 

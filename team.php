@@ -238,35 +238,169 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'remove_
   <!-- PENDING USER REQUESTS -->
   <?php if (!empty($unapproved)): ?>
   <div class="widget" style="margin-bottom:24px">
-    <div class="widget-title" style="color:#b7791f"><i class="ti ti-clock"></i> Pending Access Requests (<?= count($unapproved) ?>)</div>
-    <table class="data-table">
-      <thead><tr><th>Name</th><th>Username</th><th>Organisation</th><th>Email</th><th>Requested</th><th>Action</th></tr></thead>
-      <tbody>
-        <?php foreach ($unapproved as $uname => $u): ?>
-        <tr>
-          <td class="cell-name"><?= htmlspecialchars($u['name']) ?></td>
-          <td style="font-family:monospace;font-size:13px;color:var(--text-muted)"><?= htmlspecialchars($uname) ?></td>
-          <td><?= htmlspecialchars($u['org'] ?? '—') ?></td>
-          <td style="font-size:12.5px;color:var(--text-muted)"><?= htmlspecialchars($u['email'] ?? '—') ?></td>
-          <td style="font-size:12px;color:var(--text-muted)"><?= htmlspecialchars($u['created'] ?? '—') ?></td>
-          <td style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn btn-primary" style="font-size:11.5px;padding:5px 12px"
-                    onclick="openApprove('<?= htmlspecialchars($uname,ENT_QUOTES) ?>', '<?= htmlspecialchars(addslashes($u['name']??$uname),ENT_QUOTES) ?>')">
+    <div class="widget-title" style="color:#b7791f">
+      <i class="ti ti-clock"></i> Pending Access Requests (<?= count($unapproved) ?>)
+      <span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:8px">
+        Review each request carefully before approving
+      </span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <?php foreach ($unapproved as $uname => $u):
+        $is_co = ($u['user_type']??'') === 'company';
+        $is_sc = ($u['user_type']??'') === 'school';
+        $type_color = $is_co ? 'var(--orange)' : ($is_sc ? 'var(--teal)' : 'var(--text-muted)');
+        $type_bg    = $is_co ? 'var(--orange-soft)' : ($is_sc ? 'var(--teal-soft)' : 'var(--surface)');
+        $type_icon  = $is_co ? 'ti-building' : ($is_sc ? 'ti-school' : 'ti-user');
+        $type_label = $is_co ? 'Company' : ($is_sc ? 'School' : 'General');
+      ?>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <!-- Card header -->
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;
+                    background:white;border-bottom:1px solid var(--border)">
+          <div style="width:38px;height:38px;border-radius:10px;background:<?= $type_bg ?>;
+                      display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="ti <?= $type_icon ?>" style="font-size:17px;color:<?= $type_color ?>"></i>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:14px;font-weight:700;color:var(--text)">
+                <?= htmlspecialchars($u['name'] ?? $uname) ?>
+              </span>
+              <span style="background:<?= $type_bg ?>;color:<?= $type_color ?>;
+                           font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px">
+                <?= $type_label ?>
+              </span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+              @<?= htmlspecialchars($uname) ?> · Requested <?= htmlspecialchars($u['created'] ?? '—') ?>
+            </div>
+          </div>
+          <!-- Action buttons in header -->
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="btn btn-teal" style="font-size:12px;padding:7px 16px"
+                    onclick="openApprove('<?= htmlspecialchars($uname,ENT_QUOTES) ?>',
+                             '<?= htmlspecialchars(addslashes($u['name']??$uname),ENT_QUOTES) ?>',
+                             '<?= htmlspecialchars($u['user_type']??'general',ENT_QUOTES) ?>')">
               <i class="ti ti-check"></i> Approve
             </button>
-            <form method="POST" action="approve_user.php" style="display:inline">
+            <form method="POST" action="approve_user.php" style="display:inline"
+                  onsubmit="return confirm('Reject this request from <?= htmlspecialchars(addslashes($u['name']??$uname)) ?>?')">
               <input type="hidden" name="username" value="<?= htmlspecialchars($uname) ?>">
               <input type="hidden" name="action" value="reject">
-              <button type="submit" class="btn btn-secondary" style="font-size:11.5px;padding:5px 12px;color:#c53030;border-color:#fed7d7"
-                      onclick="return confirm('Reject this request?')">
+              <button type="submit" class="btn btn-secondary"
+                      style="font-size:12px;padding:7px 14px;color:#c53030;border-color:#fed7d7">
                 <i class="ti ti-x"></i> Reject
               </button>
             </form>
-          </td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+          </div>
+        </div>
+
+        <!-- Card body: all their info in a clean grid -->
+        <div style="padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+
+          <?php if ($is_co): ?>
+          <!-- COMPANY INFO -->
+          <?php foreach([
+            ['ti-building','Organisation',$u['org']??'—'],
+            ['ti-id','Reg Number',$u['reg_number']??'—'],
+            ['ti-user','Contact Person',$u['contact_person']??'—'],
+            ['ti-fingerprint','ID Number',$u['id_number']??'—'],
+            ['ti-phone','Phone',$u['phone']??'—'],
+            ['ti-mail','Email',$u['email']??'—'],
+            ['ti-currency-rand','CSI Budget','R '.($u['csi_budget']??'Not specified')],
+            ['ti-checkbox','Programme Pref',$u['programme_pref']??'Not specified'],
+          ] as [$ic,$lbl,$val]): ?>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <i class="ti <?= $ic ?>" style="font-size:14px;color:var(--orange);flex-shrink:0;margin-top:2px"></i>
+            <div>
+              <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em"><?= $lbl ?></div>
+              <div style="font-size:12.5px;color:var(--text);font-weight:500"><?= htmlspecialchars($val) ?></div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+          <?php if(!empty($u['focus_areas'])): ?>
+          <div style="display:flex;align-items:flex-start;gap:8px;grid-column:span 2">
+            <i class="ti ti-target" style="font-size:14px;color:var(--orange);flex-shrink:0;margin-top:2px"></i>
+            <div>
+              <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Focus Areas</div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">
+                <?php foreach(explode(',',$u['focus_areas']) as $fa): ?>
+                <span style="background:var(--orange-soft);color:var(--orange);font-size:11px;padding:2px 8px;border-radius:10px"><?= htmlspecialchars(trim($fa)) ?></span>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
+          <?php endif; ?>
+          <?php if(!empty($u['provinces'])): ?>
+          <div style="display:flex;align-items:flex-start;gap:8px;grid-column:span 2">
+            <i class="ti ti-map-pin" style="font-size:14px;color:var(--orange);flex-shrink:0;margin-top:2px"></i>
+            <div>
+              <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Target Provinces</div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">
+                <?php foreach(explode(',',$u['provinces']) as $pv): ?>
+                <span style="background:var(--purple-soft);color:var(--purple);font-size:11px;padding:2px 8px;border-radius:10px"><?= htmlspecialchars(trim($pv)) ?></span>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
+          <?php endif; ?>
+
+          <?php elseif ($is_sc): ?>
+          <!-- SCHOOL INFO -->
+          <?php foreach([
+            ['ti-school','School Name',$u['org']??'—'],
+            ['ti-map-pin','Province',$u['province']??'—'],
+            ['ti-topology-star','District',$u['district']??'—'],
+            ['ti-user','Principal Name',$u['principal_name']??'—'],
+            ['ti-fingerprint','ID Number',$u['id_number']??'—'],
+            ['ti-phone','Contact Number',$u['phone']??'—'],
+            ['ti-mail','Email',$u['email']??'—'],
+            ['ti-users','No. of Learners',($u['learners']??'—').' learners'],
+            ['ti-user-check','No. of Educators',($u['educators']??'—').' educators'],
+            ['ti-currency-rand','Funding Needed','R '.($u['funding_needed']??'Not specified')],
+          ] as [$ic,$lbl,$val]): ?>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <i class="ti <?= $ic ?>" style="font-size:14px;color:var(--teal);flex-shrink:0;margin-top:2px"></i>
+            <div>
+              <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em"><?= $lbl ?></div>
+              <div style="font-size:12.5px;color:var(--text);font-weight:500"><?= htmlspecialchars($val) ?></div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+          <?php if(!empty($u['challenges'])): ?>
+          <div style="display:flex;align-items:flex-start;gap:8px;grid-column:1/-1">
+            <i class="ti ti-alert-triangle" style="font-size:14px;color:var(--teal);flex-shrink:0;margin-top:2px"></i>
+            <div style="flex:1">
+              <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Challenges / Needs</div>
+              <div style="font-size:12.5px;color:var(--text);margin-top:3px;line-height:1.6;
+                          background:white;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+                <?= htmlspecialchars($u['challenges']) ?>
+              </div>
+            </div>
+          </div>
+          <?php endif; ?>
+
+          <?php else: ?>
+          <!-- GENERAL USER -->
+          <?php foreach([
+            ['ti-user','Name',$u['name']??'—'],
+            ['ti-mail','Email',$u['email']??'—'],
+            ['ti-building','Organisation',$u['org']??'—'],
+          ] as [$ic,$lbl,$val]): ?>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <i class="ti <?= $ic ?>" style="font-size:14px;color:var(--text-muted);flex-shrink:0;margin-top:2px"></i>
+            <div>
+              <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em"><?= $lbl ?></div>
+              <div style="font-size:12.5px;color:var(--text);font-weight:500"><?= htmlspecialchars($val) ?></div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+          <?php endif; ?>
+
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
   </div>
   <?php endif; ?>
 
@@ -514,11 +648,16 @@ function openEditUser(uname, u) {
   document.getElementById('eu-email').value = u.email || '';
   openModal('edit-user-modal');
 }
-function openApprove(uname, displayName) {
+function openApprove(uname, displayName, preType) {
   document.getElementById('approve-uname').value = uname;
   document.getElementById('approve-name-display').value = displayName + ' (@' + uname + ')';
-  document.getElementById('approve-type').value = 'general';
-  document.getElementById('linked-wrap').style.display = 'none';
+  const typeSelect = document.getElementById('approve-type');
+  typeSelect.value = preType || 'general';
+  if (preType && preType !== 'general') {
+    loadLinked(preType);
+  } else {
+    document.getElementById('linked-wrap').style.display = 'none';
+  }
   openModal('approve-modal');
 }
 function loadLinked(type) {

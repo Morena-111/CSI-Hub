@@ -1,5 +1,4 @@
 <?php
-if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 /**
  * approve_user.php
  */
@@ -14,20 +13,69 @@ $pending = file_exists($signups_file)
 
 $username  = trim($_POST['username'] ?? '');
 $action    = $_POST['action'] ?? '';
-$user_type = $_POST['user_type'] ?? 'general';   // 'company', 'school', 'general'
-$linked_id = (int)($_POST['linked_id'] ?? 0);     // FK to companies.id or schools.id
+$user_type = $_POST['user_type'] ?? 'general';
+$linked_id = (int)($_POST['linked_id'] ?? 0);
 
 if ($username && isset($pending[$username])) {
     if ($action === 'approve') {
-        $pending[$username]['approved']   = true;
-        $pending[$username]['user_type']  = $user_type;
-        $pending[$username]['linked_id']  = $linked_id ?: null;
-        $pending[$username]['approved_at']= date('Y-m-d H:i:s');
-        $pending[$username]['approved_by']= $_SESSION['name'] ?? 'Admin';
+        $u = $pending[$username];
+
+        // If company user and no linked_id yet, auto-create company record
+        if ($user_type === 'company' && !$linked_id) {
+            $stmt = $pdo->prepare("
+                INSERT INTO companies (name, sector, status, created_at)
+                VALUES (?, ?, 'active', NOW())
+                ON DUPLICATE KEY UPDATE name=name
+            ");
+            $stmt->execute([$u['org'] ?? $username, 'CSI Partner']);
+            $linked_id = (int)$pdo->lastInsertId() ?: $linked_id;
+        }
+
+        // If school user and no linked_id yet, auto-create school record
+        if ($user_type === 'school' && !$linked_id) {
+            $stmt = $pdo->prepare("
+                INSERT INTO schools (name, province, district, status,
+                                    funding_requested, created_at)
+                VALUES (?, ?, ?, 'active', ?, NOW())
+                ON DUPLICATE KEY UPDATE name=name
+            ");
+            $stmt->execute([
+                $u['org']        ?? $username,
+                $u['province']   ?? '',
+                $u['district']   ?? '',
+                (float)str_replace(',', '', $u['funding_needed'] ?? 0),
+            ]);
+            $linked_id = (int)$pdo->lastInsertId() ?: $linked_id;
+
+            // If school posted challenges, auto-create a school need
+            if (!empty($u['challenges']) && $linked_id && !empty($u['funding_needed'])) {
+                try {
+                    $pdo->prepare("
+                        INSERT INTO school_needs
+                        (school_id, title, description, amount_needed, priority, status)
+                        VALUES (?, ?, ?, ?, 'high', 'open')
+                    ")->execute([
+                        $linked_id,
+                        'Funding Request — ' . ($u['org'] ?? $username),
+                        $u['challenges'],
+                        (float)str_replace(',', '', $u['funding_needed'] ?? 0),
+                    ]);
+                } catch (Exception $e) { /* school_needs table may not exist yet */ }
+            }
+        }
+
+        $pending[$username]['approved']    = true;
+        $pending[$username]['user_type']   = $user_type;
+        $pending[$username]['linked_id']   = $linked_id ?: null;
+        $pending[$username]['approved_at'] = date('Y-m-d H:i:s');
+        $pending[$username]['approved_by'] = $_SESSION['name'] ?? 'Admin';
+
     } elseif ($action === 'reject') {
         unset($pending[$username]);
     }
+
     file_put_contents($signups_file, json_encode($pending, JSON_PRETTY_PRINT));
 }
 
-redirect('team.php');
+header('Location: team.php');
+exit;
