@@ -90,7 +90,7 @@ $sum_st= $pdo->prepare("SELECT p.*, c.name AS company_name, s.name AS school_nam
     WHERE YEAR(p.start_date)=? AND {$p_where} ORDER BY p.amount DESC");
 $sum_st->execute($sum_p); $summary = $sum_st->fetchAll();
 
-function calcProg($s,$e,$st){
+function calcProg(string $s, string $e, string $st){
     if($st==='completed') return 100; if($st==='pending') return 0;
     $now=time();$s=strtotime($s);$e=strtotime($e);
     if($now>=$e) return 100; if($now<=$s) return 0;

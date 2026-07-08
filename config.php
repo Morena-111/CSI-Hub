@@ -21,6 +21,14 @@ define('SITE_NAME', 'CSI Hub');
 define('SITE_ORG', 'Research Unlimited');
 define('SITE_EMAIL', 'info@researchunlimitedsa.co.za');
 
+define('SMTP_HOST', 'mail.researchunlimitedsa.co.za');   
+define('SMTP_PORT', 465);                                 
+define('SMTP_ENCRYPTION', 'ssl');                           
+define('SMTP_USER', 'noreply@researchunlimitedsa.co.za');  
+define('SMTP_PASS', 'buYRhs&b9ds87C');    
+define('SMTP_FROM_EMAIL', 'noreply@researchunlimitedsa.co.za');
+define('SMTP_FROM_NAME', 'CSI Hub — Research Unlimited');
+
 $_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
 define(
