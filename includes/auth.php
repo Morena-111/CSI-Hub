@@ -11,7 +11,6 @@ if (!isset($_SESSION['role'])) {
     
 }
 
-// ── ROLE HELPERS ─────────────────────────────────────────────
 function is_admin(): bool {
     return ($_SESSION['role'] ?? '') === 'admin';
 }

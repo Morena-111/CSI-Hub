@@ -1,20 +1,21 @@
 <?php
+if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 $active_page = 'partners';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
 $id = (int)($_GET['id']??0);
-if (!$id) { header('Location: /csi-hub/partners.php'); exit; }
+if (!$id) { redirect('partners.php'); }
 
 // page (schools need to see who their partners are; admin sees all).
 if (!is_admin() && ($_SESSION['user_type']??'') === 'company'
     && isset($_SESSION['linked_id']) && (int)$_SESSION['linked_id'] !== $id) {
-    header('Location: /csi-hub/partners.php'); exit;
+    redirect('partners.php');
 }
 
 $partner = $pdo->prepare("SELECT * FROM companies WHERE id=?");
 $partner->execute([$id]); $partner = $partner->fetch();
-if (!$partner) { header('Location: /csi-hub/partners.php'); exit; }
+if (!$partner) { redirect('partners.php'); }
 
 // All projects this partner has, grouped by school
 $projects = $pdo->prepare("

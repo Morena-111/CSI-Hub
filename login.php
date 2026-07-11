@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!function_exists('redirect')) require_once __DIR__ . '/config.php';
 if (!function_exists('send_app_email')) require_once __DIR__ . '/mailer.php';
+if (!function_exists('send_app_sms')) require_once __DIR__ . '/sms.php';
 if (isset($_SESSION['role'])) { redirect('dashboard.php'); }
 
 $_root_pw_file = __DIR__ . '/data/root_password.json';
@@ -36,8 +37,15 @@ function locate_account(string $u, array $admin_accounts, array $pending): ?stri
     if (isset($pending[$u]) && ($pending[$u]['approved'] ?? false)) return 'pending';
     return null;
 }
-/** Normalize a phone number to digits only, for loose comparison */
-function norm_phone(string $p): string { return preg_replace('/[^0-9]/', '', $p); }
+/** Normalize a phone number for loose comparison: strip everything but digits,
+ *  then drop a leading country code (27) or trunk zero (0) so "079...", "27079...",
+ *  and "+27 79..." all compare equal on the same 9 significant digits. */
+function norm_phone(string $p): string {
+    $digits = preg_replace('/[^0-9]/', '', $p);
+    if (substr($digits, 0, 2) === '27' && strlen($digits) > 9) $digits = substr($digits, 2);
+    elseif (substr($digits, 0, 1) === '0') $digits = substr($digits, 1);
+    return substr($digits, -9); // last 9 digits = the significant local number
+}
 
 // ── FORGOT PASSWORD — step 1: verify identity, send OTP ────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'forgot_request') {
@@ -46,16 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'forgot_
     $bucket   = locate_account($fu, $admin_accounts, $pending);
     $matched  = false;
     $send_to  = '';
+    $send_phone = '';
 
     if ($bucket === 'pending') {
         $on_file_email = strtolower($pending[$fu]['email'] ?? '');
         $on_file_phone = norm_phone($pending[$fu]['phone'] ?? '');
         $entered_email = strtolower($fcontact);
         $entered_phone = norm_phone($fcontact);
-        if (($on_file_email !== '' && $entered_email === $on_file_email)
-            || ($on_file_phone !== '' && $entered_phone !== '' && $entered_phone === $on_file_phone)) {
+        $email_matched = $on_file_email !== '' && $entered_email === $on_file_email;
+        $phone_matched = $on_file_phone !== '' && $entered_phone !== '' && $entered_phone === $on_file_phone;
+        if ($email_matched || $phone_matched) {
             $matched = true;
             $send_to = $pending[$fu]['email'] ?: SITE_EMAIL;
+            // If they verified via phone, also try SMS — email still goes out regardless,
+            // so this never breaks delivery even before an SMS provider is activated.
+            if ($phone_matched) $send_phone = $pending[$fu]['phone'];
         }
     } elseif ($bucket === 'root' || $bucket === 'admin') {
         // Admin accounts have no email/phone on file — recovery goes to the org inbox.
@@ -73,10 +86,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'forgot_
         $body    = "Hi,\n\nYour one-time code to reset your CSI Hub password is:\n\n{$otp}\n\n"
                  . "This code expires in 10 minutes. If you didn't request this, you can ignore this email.\n\nResearch Unlimited";
         send_app_email($send_to, $subject, $body);
+
+        if ($send_phone !== '') {
+            send_app_sms($send_phone, "CSI Hub: your password reset code is {$otp}. Expires in 10 minutes.");
+        }
     }
 
     // Same response either way, so no one can tell which usernames/contacts are valid
-    $forgot_msg   = "If that username and contact detail match our records, we've emailed a 6-digit code to the address on file.";
+    $forgot_msg   = "If that username and contact detail match our records, we've emailed a 6-digit code to the address on file"
+                  . " (and texted it too, if SMS is enabled).";
     $active_tab   = 'forgot';
     $awaiting_otp = $fu;
 }
@@ -212,7 +230,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'signup'
             $record['learners']       = trim($_POST['learners']??'');
             $record['educators']      = trim($_POST['educators']??'');
             $record['funding_needed'] = trim($_POST['funding_needed']??'');
-            $record['challenges']     = trim($_POST['challenges']??'');
+            $record['challenges']          = trim($_POST['challenges']??'');
+            $record['urgent_needs']        = implode(', ', (array)($_POST['urgent_needs']??[]));
+            $record['support_subjects']    = implode(', ', (array)($_POST['support_subjects']??[]));
+            $record['infrastructure_rating']= trim($_POST['infrastructure_rating']??'');
+            $record['has_electricity']     = trim($_POST['has_electricity']??'');
+            $record['lacking_materials']   = trim($_POST['lacking_materials']??'');
+            $record['csi_support_type']    = trim($_POST['csi_support_type']??'');
         }
         $pending[$suser] = $record;
         file_put_contents($signups_file, json_encode($pending, JSON_PRETTY_PRINT));
@@ -253,11 +277,11 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
 /* ═══════════ TOP SITE HEADER (light, matches dashboard) ═══════════ */
 .site-header{
   background:var(--white);border-bottom:1px solid var(--border);
-  padding:13px 34px;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 34px;display:flex;align-items:center;justify-content:space-between;
   flex-shrink:0;position:relative;z-index:10;
 }
 .sh-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.sh-brand img{height:32px;width:auto;object-fit:contain;transition:transform .35s ease}
+.sh-brand img{height:46px;width:auto;object-fit:contain;transition:transform .35s ease}
 .sh-brand:hover img{transform:rotate(-6deg) scale(1.08)}
 .sh-nav{display:flex;gap:26px}
 .sh-nav a{color:var(--text);text-decoration:none;font-size:13.5px;font-weight:500;position:relative;padding:4px 0;transition:color .15s}
@@ -403,8 +427,14 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
   padding:15px 28px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
 }
-.auth-topbar img{height:34px;width:auto;object-fit:contain;transition:transform .4s cubic-bezier(.4,.2,.2,1);cursor:default}
-.auth-topbar img:hover{transform:rotateY(360deg)}
+.secure-badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
+  color:#046b4d;background:var(--teal-soft);border:1px solid #bdeedc;
+  padding:6px 12px;border-radius:99px;transition:transform .25s ease,box-shadow .25s ease;
+}
+.secure-badge i{font-size:14px;color:var(--teal);transition:transform .4s ease}
+.secure-badge:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,196,140,.18)}
+.secure-badge:hover i{transform:scale(1.15) rotate(-8deg)}
 .auth-topbar-contact{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
 .auth-topbar-contact i{color:var(--orange);font-size:13px;transition:transform .35s ease}
 .auth-topbar-contact a{color:var(--muted);text-decoration:none;transition:color .15s}
@@ -413,6 +443,7 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
 
 .auth-body{
   flex:1;padding:24px 28px 16px;display:flex;flex-direction:column;overflow-y:auto;
+  justify-content:center;
   scrollbar-width:thin;scrollbar-color:#e2e8f0 transparent;
   animation:cardIn .5s .1s cubic-bezier(.22,1,.36,1) both;
 }
@@ -420,17 +451,23 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
 .auth-body::-webkit-scrollbar{width:4px}
 .auth-body::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px}
 
-.auth-tabs{display:flex;background:#f1f5f9;border-radius:10px;padding:4px;gap:4px;margin-bottom:22px}
+.auth-tabs{display:flex;background:#f1f5f9;border-radius:10px;padding:4px;gap:4px;margin-bottom:22px;position:relative}
+.tab-indicator{
+  position:absolute;top:4px;left:4px;width:calc(50% - 6px);height:calc(100% - 8px);
+  background:var(--white);border-radius:7px;box-shadow:0 2px 8px rgba(26,31,46,.1);
+  transition:transform .3s cubic-bezier(.4,.2,.2,1),background .3s;z-index:0;
+}
+.tab-indicator.pos-signup{transform:translateX(calc(100% + 4px))}
 .auth-tab{
   flex:1;padding:9px 8px;border:none;background:transparent;cursor:pointer;
   border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);
   display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:all .2s;font-family:'Poppins',sans-serif;
+  transition:color .2s;font-family:'Poppins',sans-serif;position:relative;z-index:1;
 }
 .auth-tab i{transition:transform .45s cubic-bezier(.4,.2,.2,1)}
 .auth-tab:hover i{transform:rotateY(360deg)}
-.auth-tab.active{background:var(--white);color:var(--orange);font-weight:700;box-shadow:0 2px 8px rgba(26,31,46,.1)}
-.auth-tab.active-teal{background:var(--white);color:var(--teal);font-weight:700;box-shadow:0 2px 8px rgba(26,31,46,.1)}
+.auth-tab.active{color:var(--orange);font-weight:700}
+.auth-tab.active-teal{color:var(--teal);font-weight:700}
 
 .panel{display:none;animation:fadeIn .3s ease}
 .panel.on{display:block}
@@ -476,6 +513,12 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
 .pw-btn i{display:inline-block;transition:transform .4s cubic-bezier(.4,.2,.2,1)}
 .pw-btn:hover{color:var(--muted)}
 .pw-btn:hover i{transform:rotateY(180deg) scale(1.1)}
+.caps-warn{
+  display:none;align-items:center;gap:5px;font-size:10.5px;color:#b45309;
+  margin-top:6px;animation:alertPop .2s ease;
+}
+.caps-warn.show{display:flex}
+.caps-warn i{font-size:12px}
 
 .type-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;perspective:700px}
 .type-card{
@@ -502,8 +545,19 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
 
 .al{border-radius:9px;padding:11px 14px;margin-bottom:16px;display:flex;gap:9px;font-size:12.5px;line-height:1.5;align-items:flex-start}
 .al i{font-size:15px;flex-shrink:0;margin-top:1px}
-.al-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}.al-err i{color:#ef4444}
-.al-ok{background:var(--teal-soft);border:1px solid #a7e9d3;color:#054d36}.al-ok i{color:var(--teal)}
+.al-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;animation:alertShake .45s ease}
+.al-err i{color:#ef4444;animation:iconPop .45s ease}
+.al-ok{background:var(--teal-soft);border:1px solid #a7e9d3;color:#054d36;animation:alertPop .35s ease}
+.al-ok i{color:var(--teal)}
+@keyframes alertShake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(5px)}
+  60%{transform:translateX(-3px)}
+  80%{transform:translateX(2px)}
+}
+@keyframes iconPop{0%{transform:scale(.5)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes alertPop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
 .errs{list-style:none;display:flex;flex-direction:column;gap:3px}
 .errs li::before{content:'· ';font-weight:700}
 
@@ -682,7 +736,9 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
       </div>
 
       <div class="auth-topbar">
-        <img src="assets/img/logo.png" alt="Research Unlimited">
+        <div class="secure-badge">
+          <i class="ti ti-shield-lock"></i> Secure Sign-In
+        </div>
         <span class="auth-topbar-contact">
           <i class="ti ti-phone"></i>
           <a href="tel:+27795343798">079 534 3798</a>
@@ -700,6 +756,7 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
         <?php endif; ?>
 
         <div class="auth-tabs">
+          <div class="tab-indicator <?= $active_tab==='signup'?'pos-signup':'' ?>" id="tab-indicator"></div>
           <button class="auth-tab <?= $active_tab==='login'?'active':'' ?>" id="tb-login" onclick="go('login')">
             <i class="ti ti-login"></i> Sign In
           </button>
@@ -731,11 +788,13 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
               </div>
               <div class="iw" style="margin-top:6px"><i class="ico ti ti-lock"></i>
                 <input class="fi" type="password" id="lp" name="password"
-                       placeholder="Enter your password" autocomplete="current-password" required>
+                       placeholder="Enter your password" autocomplete="current-password" required
+                       onkeyup="checkCaps(event,'cw-lp')" onblur="document.getElementById('cw-lp').classList.remove('show')">
                 <button type="button" class="pw-btn" onclick="tpw('lp','le')">
                   <i class="ti ti-eye" id="le"></i>
                 </button>
               </div>
+              <div class="caps-warn" id="cw-lp"><i class="ti ti-alert-triangle"></i> Caps Lock is on</div>
             </div>
             <button type="submit" class="sbtn s-orange">
               <i class="ti ti-login"></i> Sign In to CSI Hub
@@ -773,17 +832,22 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
               <label class="fl">New Password <span>*</span></label>
               <div class="iw"><i class="ico ti ti-lock"></i>
                 <input class="fi" type="password" id="rp" name="new_password"
-                       placeholder="Min 8 chars, 1 uppercase, 1 number" required>
+                       placeholder="Min 8 chars, 1 uppercase, 1 number" required
+                       onkeyup="checkCaps(event,'cw-rp');checkMatch()"
+                       onblur="document.getElementById('cw-rp').classList.remove('show')">
                 <button type="button" class="pw-btn" onclick="tpw('rp','re')">
                   <i class="ti ti-eye" id="re"></i>
                 </button>
               </div>
+              <div class="caps-warn" id="cw-rp"><i class="ti ti-alert-triangle"></i> Caps Lock is on</div>
             </div>
             <div class="fg">
               <label class="fl">Confirm New Password <span>*</span></label>
               <div class="iw"><i class="ico ti ti-lock-check"></i>
-                <input class="fi" type="password" name="confirm_new_password" placeholder="Repeat new password" required>
+                <input class="fi" type="password" id="rpc" name="confirm_new_password" placeholder="Repeat new password" required onkeyup="checkMatch()" style="padding-right:38px">
+                <i class="ti ti-circle-check" id="match-ok" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--teal);font-size:16px;display:none"></i>
               </div>
+              <div id="match-msg" style="display:none;font-size:10.5px;color:var(--teal);margin-top:5px;align-items:center;gap:4px"><i class="ti ti-check"></i> Passwords match</div>
             </div>
             <button type="submit" class="sbtn s-orange">
               <i class="ti ti-lock-check"></i> Reset Password
@@ -794,7 +858,7 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
           </div>
           <?php else: ?>
           <h2 class="auth-heading">Reset Your Password</h2>
-          <p class="auth-sub">Enter your username and the email or phone number on your account — we'll send you a 6-digit code.</p>
+          <p class="auth-sub">Enter your username and the email or phone number on your account to verify it's you — we'll <strong>email</strong> a 6-digit code to the address on file.</p>
           <form method="POST">
             <input type="hidden" name="form" value="forgot_request">
             <div class="fg">
@@ -998,6 +1062,81 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
                   <textarea class="fi ft noi" name="challenges" rows="3"
                     placeholder="Describe your school's main challenges and what support you need…"><?= htmlspecialchars($_POST['challenges']??'') ?></textarea>
                 </div>
+
+                <!-- COMPULSORY NEEDS ASSESSMENT -->
+                <div class="section-label" style="margin-top:4px">
+                  <i class="ti ti-clipboard-list" style="color:var(--teal)"></i>
+                  Quick Needs Assessment
+                  <span style="font-size:9px;background:var(--teal);color:white;padding:2px 8px;border-radius:8px;margin-left:6px;font-weight:700">Required</span>
+                </div>
+
+                <div class="fg">
+                  <label class="fl">Most Urgent Needs <span>*</span></label>
+                  <div class="check-grid">
+                    <?php foreach(['Computers & Technology','Science Laboratory','Library Books','Sports Equipment','Classroom Furniture','Sanitation Facilities','Internet Access','Security','Teacher Training'] as $_sn): ?>
+                    <label class="chk">
+                      <input type="checkbox" name="urgent_needs[]" value="<?= $_sn ?>">
+                      <?= $_sn ?>
+                    </label>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+
+                <div class="fg">
+                  <label class="fl">Subjects Needing Most Support</label>
+                  <div class="check-grid">
+                    <?php foreach(['Mathematics','Physical Science','English','Technology','Life Sciences','Accounting','Geography','History'] as $_ss): ?>
+                    <label class="chk">
+                      <input type="checkbox" name="support_subjects[]" value="<?= $_ss ?>">
+                      <?= $_ss ?>
+                    </label>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+
+                <div class="frow">
+                  <div class="fg">
+                    <label class="fl">Infrastructure Rating <span>*</span></label>
+                    <select class="fi ft noi" name="infrastructure_rating" required>
+                      <option value="">Select…</option>
+                      <option value="1">1 — Very Poor</option>
+                      <option value="2">2 — Poor</option>
+                      <option value="3">3 — Average</option>
+                      <option value="4">4 — Good</option>
+                      <option value="5">5 — Excellent</option>
+                    </select>
+                  </div>
+                  <div class="fg">
+                    <label class="fl">Reliable Electricity?</label>
+                    <select class="fi ft noi" name="has_electricity">
+                      <option value="">Select…</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                      <option>Sometimes</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="frow">
+                  <div class="fg">
+                    <label class="fl">Learners Without Basic Materials</label>
+                    <input class="fi ft" type="text" name="lacking_materials" placeholder="e.g. 200 learners have no textbooks">
+                  </div>
+                  <div class="fg">
+                    <label class="fl">CSI Support Needed Most</label>
+                    <select class="fi ft noi" name="csi_support_type">
+                      <option value="">Select…</option>
+                      <option>Infrastructure development</option>
+                      <option>Academic support programmes</option>
+                      <option>Digital skills &amp; technology</option>
+                      <option>Teacher development</option>
+                      <option>Sports &amp; arts programmes</option>
+                      <option>Feeding scheme / nutrition</option>
+                      <option>Security improvements</option>
+                    </select>
+                  </div>
+                </div>
+
               </div>
 
               <div class="section-label"><i class="ti ti-mail"></i> Contact Details</div>
@@ -1032,11 +1171,13 @@ textarea.fi{resize:vertical;min-height:64px;padding-top:11px}
                 <div class="iw"><i class="ico ti ti-lock"></i>
                   <input class="fi" type="password" id="sp" name="password"
                          placeholder="Min 8 chars, 1 uppercase, 1 number"
-                         oninput="chkStr(this.value)">
+                         oninput="chkStr(this.value)" onkeyup="checkCaps(event,'cw-sp')"
+                         onblur="document.getElementById('cw-sp').classList.remove('show')">
                   <button type="button" class="pw-btn" onclick="tpw('sp','se')">
                     <i class="ti ti-eye" id="se"></i>
                   </button>
                 </div>
+                <div class="caps-warn" id="cw-sp"><i class="ti ti-alert-triangle"></i> Caps Lock is on</div>
                 <div class="pw-strength">
                   <div class="pw-bar"><div class="pw-fill" id="pf"></div></div>
                   <div class="pw-rules">
@@ -1105,6 +1246,8 @@ function go(tab) {
     const btn = document.getElementById('tb-'+t);
     btn.className = 'auth-tab' + (t===tab ? (t==='login' ? ' active' : ' active-teal') : '');
   });
+  const ind = document.getElementById('tab-indicator');
+  if (ind) ind.classList.toggle('pos-signup', tab === 'signup');
 }
 go('<?= $active_tab ?>');
 
@@ -1139,6 +1282,24 @@ function chkStr(v) {
     el.classList.toggle('ok', ok);
     el.querySelector('i').className = ok ? 'ti ti-circle-check' : 'ti ti-circle';
   });
+}
+
+/* Caps Lock warning under any password field */
+function checkCaps(e, warnId) {
+  const el = document.getElementById(warnId);
+  if (!el) return;
+  const isCaps = e.getModifierState && e.getModifierState('CapsLock');
+  el.classList.toggle('show', !!isCaps);
+}
+
+/* Live "passwords match" indicator on the reset-password screen */
+function checkMatch() {
+  const rp = document.getElementById('rp'), rpc = document.getElementById('rpc');
+  const okIcon = document.getElementById('match-ok'), msg = document.getElementById('match-msg');
+  if (!rp || !rpc) return;
+  const matches = rpc.value.length > 0 && rp.value === rpc.value;
+  if (okIcon) okIcon.style.display = matches ? 'block' : 'none';
+  if (msg) msg.style.display = matches ? 'flex' : 'none';
 }
 </script>
 </body>

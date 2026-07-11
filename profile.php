@@ -3,6 +3,25 @@ $active_page = '';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
+// Pull actual org name from DB based on user type
+$profile_org  = $profile_org;
+$profile_utype = $_SESSION['user_type'] ?? 'general';
+$profile_lid   = (int)($_SESSION['linked_id'] ?? 0);
+
+if ($profile_lid) {
+    if ($profile_utype === 'company') {
+        $pq = $pdo->prepare("SELECT name, sector FROM companies WHERE id=?");
+        $pq->execute([$profile_lid]);
+        $pr = $pq->fetch();
+        if ($pr) { $profile_org = $pr['name']; }
+    } elseif ($profile_utype === 'school') {
+        $pq = $pdo->prepare("SELECT name, province FROM schools WHERE id=?");
+        $pq->execute([$profile_lid]);
+        $pr = $pq->fetch();
+        if ($pr) { $profile_org = $pr['name']; }
+    }
+}
+
 $success = ''; $error = '';
 $uname   = $_SESSION['username'] ?? 'admin';
 $utype   = $_SESSION['user_type'] ?? 'general';

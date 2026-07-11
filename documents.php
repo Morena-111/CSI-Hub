@@ -70,6 +70,21 @@ $where = [];
 $params = [];
 if ($filter_cat) { $where[] = 'd.category = ?'; $params[] = $filter_cat; }
 if ($search)     { $where[] = '(d.title LIKE ? OR d.description LIKE ?)'; $params[] = "%$search%"; $params[] = "%$search%"; }
+
+// ── DATA ISOLATION — users only see their own documents ───────
+if (!is_admin()) {
+    $utype = $_SESSION['user_type'] ?? 'general';
+    $lid   = (int)($_SESSION['linked_id'] ?? 0);
+    if ($utype === 'company' && $lid) {
+        $where[] = 'd.company_id = ?'; $params[] = $lid;
+    } elseif ($utype === 'school' && $lid) {
+        $where[] = 'd.school_id = ?'; $params[] = $lid;
+    } else {
+        // General users only see their own uploads
+        $where[] = 'd.uploaded_by = ?'; $params[] = $_SESSION['name'] ?? 'nobody';
+    }
+}
+
 $where_sql = $where ? 'WHERE '.implode(' AND ', $where) : '';
 
 $docs = $pdo->prepare("
@@ -409,4 +424,37 @@ function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 </script>
 
+<!-- Document Approval Modal -->
+<div class="modal-overlay" id="doc-approve-modal" onclick="if(event.target.id==='doc-approve-modal')closeModal('doc-approve-modal')">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('doc-approve-modal')"><i class="ti ti-x"></i></button>
+    <h2 id="doc-modal-title">Review Document</h2>
+    <div class="modal-sub" id="doc-modal-sub"></div>
+    <form method="POST">
+      <input type="hidden" name="doc_id" id="doc-modal-id">
+      <input type="hidden" name="action" id="doc-modal-action">
+      <div class="form-group">
+        <label class="form-label">Note to User (optional)</label>
+        <textarea class="form-input" name="admin_note" rows="2" placeholder="Reason for rejection or approval note…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('doc-approve-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="doc-modal-btn">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function openApproveDoc(id, action, title) {
+  document.getElementById('doc-modal-id').value = id;
+  document.getElementById('doc-modal-action').value = action;
+  document.getElementById('doc-modal-title').textContent = action==='approve' ? 'Approve Document' : 'Reject Document';
+  document.getElementById('doc-modal-sub').textContent = title;
+  const btn = document.getElementById('doc-modal-btn');
+  btn.textContent = action==='approve' ? 'Approve' : 'Reject';
+  btn.className = action==='approve' ? 'btn btn-teal' : 'btn btn-secondary';
+  if(action==='reject') btn.style.color='#c53030';
+  openModal('doc-approve-modal');
+}
+</script>
 <?php include 'includes/footer.php'; ?>

@@ -138,16 +138,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form']??'') === 'wizard_up
             $meta_json = json_encode($meta);
 
             if (move_uploaded_file($_FILES['doc_file']['tmp_name'], $upload_dir . $safe)) {
-                // Save to documents table
+                // Determine company/school ownership
+                $_wiz_utype   = $_SESSION['user_type'] ?? 'general';
+                $_wiz_lid     = (int)($_SESSION['linked_id'] ?? 0);
+                $_wiz_company = $_wiz_utype === 'company' && $_wiz_lid ? $_wiz_lid : null;
+                $_wiz_school  = $_wiz_utype === 'school'  && $_wiz_lid ? $_wiz_lid : null;
+
+                // Save to documents table with ownership
                 $pdo->prepare("
-                    INSERT INTO documents (title, file_name, category, uploaded_by, notes, created_at)
-                    VALUES (?, ?, ?, ?, ?, NOW())
+                    INSERT INTO documents (title, file_name, category, uploaded_by, notes,
+                                          company_id, school_id, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
                 ")->execute([
                     $step['title'],
                     $safe,
                     $step['category'],
                     $_SESSION['name'] ?? 'User',
-                    $meta_json
+                    $meta_json,
+                    $_wiz_company,
+                    $_wiz_school
                 ]);
 
                 // Mark step as complete in session

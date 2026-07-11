@@ -1,6 +1,7 @@
 <?php
 /**
  * sidebar.php
+ * Place in: C:\xampp\htdocs\csi-hub\includes\sidebar.php
  */
 
 // Determine user type label
@@ -39,8 +40,9 @@ $nav['OVERVIEW'] = [
 // ── MANAGEMENT ──────────────────────────────────────────────
 $nav['MANAGEMENT'] = [
     ['key'=>'partners',  'icon'=>'ti-users',        'label'=>'Partners',   'href'=>'partners.php',  'badge'=>null],
-    ['key'=>'schools',      'icon'=>'ti-school',          'label'=>'Schools',      'href'=>'schools.php',      'badge'=>null],
-    ['key'=>'school_needs', 'icon'=>'ti-heart-handshake', 'label'=>'School Needs', 'href'=>'school_needs.php', 'badge'=>null],
+    ['key'=>'schools',       'icon'=>'ti-school',          'label'=>'Schools',       'href'=>'schools.php',         'badge'=>null],
+    ['key'=>'browse_schools','icon'=>'ti-search',          'label'=>'Browse Schools', 'href'=>'browse_schools.php',  'badge'=>null],
+    ['key'=>'school_needs', 'icon'=>'ti-heart-handshake', 'label'=>'School Needs',  'href'=>'school_needs.php', 'badge'=>null],
     ['key'=>'documents', 'icon'=>'ti-file-invoice',  'label'=>'Documents',  'href'=>'documents.php', 'badge'=>(int)$badge_docs ?: null],
     ['key'=>'doc_wizard', 'icon'=>'ti-checklist',      'label'=>'Submit Docs', 'href'=>'document_wizard.php', 'badge'=>null],
     ['key'=>'events',    'icon'=>'ti-calendar',      'label'=>'Events',     'href'=>'events.php',    'badge'=>(int)$badge_events ?: null],
@@ -50,13 +52,14 @@ $nav['MANAGEMENT'] = [
 // ── ADMIN (admin only) ───────────────────────────────────────
 if (is_admin()) {
     $nav['ADMIN'] = [
-        ['key'=>'surveys',  'icon'=>'ti-clipboard-list', 'label'=>'Surveys',   'href'=>'surveys.php',  'badge'=>null],
+        ['key'=>'surveys',          'icon'=>'ti-clipboard-list',  'label'=>'Surveys',          'href'=>'surveys.php',          'badge'=>null],
+        ['key'=>'pledge_management','icon'=>'ti-heart-handshake', 'label'=>'Pledges',          'href'=>'pledge_management.php','badge'=>null],
         ['key'=>'team',     'icon'=>'ti-users-group',    'label'=>'Team',      'href'=>'team.php',     'badge'=>(int)$badge_pending ?: null],
         ['key'=>'settings', 'icon'=>'ti-settings',       'label'=>'Settings',  'href'=>'settings.php', 'badge'=>null],
     ];
 }
 ?>
-<aside class="sidebar">
+<aside class="sidebar" id="app-sidebar">
 
   <!-- Brand — text only, logo lives in header -->
   <div class="sidebar-brand">

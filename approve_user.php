@@ -1,6 +1,7 @@
 <?php
 /**
- * approve_user.php
+ * approve_user.php — Approve or reject a user access request
+ * Place in: C:\xampp\htdocs\CSI-Hub\approve_user.php
  */
 require_once 'includes/auth.php';
 require_admin_role();
@@ -20,35 +21,45 @@ if ($username && isset($pending[$username])) {
     if ($action === 'approve') {
         $u = $pending[$username];
 
-        // If company user and no linked_id yet, auto-create company record
+        // ── AUTO-CREATE COMPANY RECORD (only for company users) ──
         if ($user_type === 'company' && !$linked_id) {
             $stmt = $pdo->prepare("
                 INSERT INTO companies (name, sector, status, created_at)
-                VALUES (?, ?, 'active', NOW())
-                ON DUPLICATE KEY UPDATE name=name
+                VALUES (?, 'CSI Partner', 'active', NOW())
             ");
-            $stmt->execute([$u['org'] ?? $username, 'CSI Partner']);
-            $linked_id = (int)$pdo->lastInsertId() ?: $linked_id;
+            $stmt->execute([$u['org'] ?? $username]);
+            $linked_id = (int)$pdo->lastInsertId();
+
+            // Update company with extra signup info if we got a real insert
+            if ($linked_id) {
+                $pdo->prepare("UPDATE companies SET sector=?, status='active' WHERE id=?")
+                    ->execute([
+                        !empty($u['focus_areas']) ? $u['focus_areas'] : 'CSI Partner',
+                        $linked_id
+                    ]);
+            }
         }
 
-        // If school user and no linked_id yet, auto-create school record
+        // ── AUTO-CREATE SCHOOL RECORD ─────────────────────────
         if ($user_type === 'school' && !$linked_id) {
+            $funding = (float)str_replace([',','R',' '], '', $u['funding_needed'] ?? 0);
             $stmt = $pdo->prepare("
-                INSERT INTO schools (name, province, district, status,
-                                    funding_requested, created_at)
-                VALUES (?, ?, ?, 'active', ?, NOW())
-                ON DUPLICATE KEY UPDATE name=name
+                INSERT INTO schools
+                (name, province, district, status, learners, educators, funding_requested, created_at)
+                VALUES (?, ?, ?, 'active', ?, ?, ?, NOW())
             ");
             $stmt->execute([
-                $u['org']        ?? $username,
-                $u['province']   ?? '',
-                $u['district']   ?? '',
-                (float)str_replace(',', '', $u['funding_needed'] ?? 0),
+                $u['org']       ?? $username,
+                $u['province']  ?? '',
+                $u['district']  ?? '',
+                (int)($u['learners']  ?? 0),
+                (int)($u['educators'] ?? 0),
+                $funding,
             ]);
-            $linked_id = (int)$pdo->lastInsertId() ?: $linked_id;
+            $linked_id = (int)$pdo->lastInsertId();
 
-            // If school posted challenges, auto-create a school need
-            if (!empty($u['challenges']) && $linked_id && !empty($u['funding_needed'])) {
+            // Auto-create school need from challenges
+            if ($linked_id && !empty($u['challenges']) && $funding > 0) {
                 try {
                     $pdo->prepare("
                         INSERT INTO school_needs
@@ -58,9 +69,9 @@ if ($username && isset($pending[$username])) {
                         $linked_id,
                         'Funding Request — ' . ($u['org'] ?? $username),
                         $u['challenges'],
-                        (float)str_replace(',', '', $u['funding_needed'] ?? 0),
+                        $funding,
                     ]);
-                } catch (Exception $e) { /* school_needs table may not exist yet */ }
+                } catch (Exception $e) {}
             }
         }
 
@@ -69,6 +80,30 @@ if ($username && isset($pending[$username])) {
         $pending[$username]['linked_id']   = $linked_id ?: null;
         $pending[$username]['approved_at'] = date('Y-m-d H:i:s');
         $pending[$username]['approved_by'] = $_SESSION['name'] ?? 'Admin';
+
+        // ── SEND APPROVAL EMAIL ───────────────────────────────
+        if (!empty($u['email'])) {
+            $msg = "Dear {$u['name']},
+
+"
+                 . "Your CSI Hub access request has been approved!
+
+"
+                 . "You can now log in at: " . SITE_URL . "login.php
+"
+                 . "Username: {$username}
+
+"
+                 . "If you have any questions, contact us:
+"
+                 . "Email: " . HELP_EMAIL . "
+"
+                 . "Phone: " . HELP_PHONE . "
+
+"
+                 . "Research Unlimited — Research Made Easy";
+            send_email($u['email'], "CSI Hub — Your Access Has Been Approved", $msg);
+        }
 
     } elseif ($action === 'reject') {
         unset($pending[$username]);

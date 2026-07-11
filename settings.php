@@ -11,7 +11,6 @@ $_s_user = $_SESSION['username'] ?? 'admin';
 $success_msg = '';
 $error_msg   = '';
 
-// ── SAVE PROFILE ─────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'profile') {
     $new_name  = trim($_POST['full_name'] ?? '');
     $new_email = trim($_POST['email'] ?? '');
@@ -31,7 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'profile
     }
 }
 
-// ── CHANGE PASSWORD ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'password') {
     $current  = $_POST['current_password'] ?? '';
     $new_pass = $_POST['new_password'] ?? '';
@@ -56,9 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'passwor
     }
 }
 
-// ── EXPORT CSV handled above before HTML output ────────────
 
-// ── SAVE PREFERENCES ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'preferences') {
     $prefs = [
         'date_format'   => $_POST['date_format']   ?? 'DD/MM/YYYY',
@@ -245,7 +241,10 @@ $db_stats = [
           <button type="submit" name="export_type" value="schools" class="btn btn-secondary" style="justify-content:flex-start">
             <i class="ti ti-school"></i> Export Schools
           </button>
-          <button type="submit" name="export_type" value="companies" class="btn btn-secondary" style="justify-content:flex-start">
+          <button type="submit" name="export_type" value="school_needs" class="btn btn-secondary" style="justify-content:flex-start">
+              <i class="ti ti-heart-handshake"></i> Export School Needs
+            </button>
+            <button type="submit" name="export_type" value="companies" class="btn btn-secondary" style="justify-content:flex-start">
             <i class="ti ti-building"></i> Export Companies
           </button>
         </form>

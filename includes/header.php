@@ -784,9 +784,153 @@ textarea.form-input{resize:vertical;min-height:80px}
   display:flex;justify-content:flex-end;gap:10px;
   margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
 }
+
+/* ======================================================
+   ENHANCED UI - Animations, Polish & Mobile Responsive
+   Applied platform-wide via header.php
+====================================================== */
+
+/* Page load animations */
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:.65}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+.main{animation:fadeSlideUp .35s ease both}
+.sidebar{animation:slideInLeft .3s ease both}
+.widget{animation:fadeSlideUp .3s ease both;transition:box-shadow .2s,transform .2s}
+.widget:nth-child(2){animation-delay:.05s}
+.widget:nth-child(3){animation-delay:.1s}
+.widget:nth-child(4){animation-delay:.15s}
+.widget:hover{box-shadow:0 4px 20px rgba(13,30,61,.09);}
+.stat-card{transition:all .2s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--orange),var(--orange-soft));opacity:0;transition:opacity .2s}
+.stat-card:hover::before{opacity:1}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(13,30,61,.1)}
+.stat-card.teal::before{background:linear-gradient(90deg,var(--teal),var(--teal-soft))}
+.stat-card.purple::before{background:linear-gradient(90deg,var(--purple),var(--purple-soft))}
+.stat-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold-soft))}
+
+/* Button enhancements */
+.btn{transition:all .18s;position:relative}
+.btn:active{transform:scale(.98)}
+.btn-primary:hover{background:var(--orange-h);box-shadow:0 4px 16px rgba(232,84,26,.35);transform:translateY(-1px)}
+.btn-teal:hover{background:var(--teal-h);box-shadow:0 4px 16px rgba(0,196,140,.3);transform:translateY(-1px)}
+.btn-secondary:hover{background:var(--border);transform:translateY(-1px)}
+
+/* Form inputs */
+.form-input,.form-select{transition:border-color .15s,box-shadow .15s,background .15s}
+.form-input:hover,.form-select:hover{border-color:#cbd5e1;background:var(--white)}
+
+/* Table rows */
+.data-table tbody tr{transition:background .12s}
+.data-table tbody tr:hover{background:rgba(232,84,26,.03) !important}
+
+/* Sidebar items */
+.sidebar-item{transition:background .12s,transform .12s}
+.sidebar-item:hover:not(.active){transform:translateX(2px)}
+
+/* Icon buttons */
+.topnav-icon-btn{transition:background .15s,transform .15s}
+.topnav-icon-btn:hover{transform:scale(1.08)}
+
+/* Status badges */
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+  border-radius:20px;font-size:11.5px;font-weight:600}
+.status-badge::before{content:'';width:5px;height:5px;border-radius:50%;
+  background:currentColor;opacity:.6;flex-shrink:0}
+.status-badge.active{background:var(--teal-soft);color:#00956a}
+.status-badge.pending{background:var(--gold-soft);color:#9a6700}
+.status-badge.completed{background:var(--surface);color:var(--text-muted)}
+.status-badge.paused{background:#fde9e9;color:#c53030}
+.status-badge.approved{background:var(--teal-soft);color:#00956a}
+.status-badge.rejected{background:#fde9e9;color:#c53030}
+
+/* Modal animation */
+.modal-overlay.open{animation:fadeIn .2s ease}
+.modal{animation:fadeSlideUp .25s ease;border-radius:16px;box-shadow:0 20px 60px rgba(13,30,61,.2)}
+
+/* Notification badge pulse */
+.topnav-notif-badge{animation:pulse-soft 2s ease-in-out infinite}
+
+/* Stats row */
+.stats-row{display:flex;gap:14px;flex-wrap:wrap}
+.stats-row .stat-card{flex:1;min-width:140px}
+
+/* Page banner */
+.page-banner{display:flex;align-items:center;gap:6px;font-size:12px;
+  color:var(--text-muted);margin-bottom:18px;animation:fadeIn .3s ease}
+.page-banner .active-crumb{color:var(--orange);font-weight:600}
+
+/* Empty states */
+.empty-state{text-align:center;padding:48px 24px;animation:fadeIn .4s ease}
+.empty-state i{font-size:44px;opacity:.2;display:block;margin-bottom:14px;
+  animation:pulse-soft 3s ease-in-out infinite}
+
+/* ======================================================
+   MOBILE HAMBURGER TOGGLE
+====================================================== */
+.sidebar-toggle{
+  display:none;width:36px;height:36px;border-radius:8px;
+  align-items:center;justify-content:center;
+  background:none;border:none;cursor:pointer;
+  font-size:20px;color:var(--text);transition:background .15s;flex-shrink:0;
+}
+.sidebar-toggle:hover{background:var(--surface)}
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(13,30,61,.45);z-index:49;animation:fadeIn .2s ease;
+}
+.sidebar-overlay.visible{display:block}
+
+/* ======================================================
+   MOBILE RESPONSIVE BREAKPOINTS
+====================================================== */
+@media(max-width:900px){
+  .sidebar-toggle{display:flex}
+  .sidebar{
+    position:fixed !important;left:-260px !important;top:0;bottom:0;
+    z-index:50;transition:left .25s cubic-bezier(.4,0,.2,1);
+    box-shadow:none;width:260px !important;height:100vh;overflow-y:auto;
+  }
+  .sidebar.open{left:0 !important;box-shadow:4px 0 32px rgba(13,30,61,.15)}
+  .layout{flex-direction:column}
+  .main{margin-left:0 !important;padding:16px !important;overflow-y:auto}
+  .topnav-left{width:auto !important;border-right:none !important;padding:0 12px !important}
+  .topnav-logo-name,.topnav-logo-sub{display:none}
+  .topnav-centre{padding:0 10px !important}
+  .topnav-me-link .me-desc{display:none}
+  .topnav-me-link{padding:8px 14px !important;min-width:0 !important}
+  .topnav-me-link .me-title{font-size:12px !important}
+  .topnav-search-wrap{max-width:160px}
+  .stats-row .stat-card{min-width:calc(50% - 7px);flex:none}
+  .form-row{grid-template-columns:1fr !important}
+  .page-header{flex-direction:column !important;align-items:flex-start !important;gap:12px !important}
+  .page-header h1{font-size:22px !important}
+  .widget{padding:16px !important}
+  .modal{width:calc(100vw - 24px) !important;max-width:none !important;
+    max-height:90vh;overflow-y:auto;margin:12px}
+  .data-table{font-size:12px}
+  .data-table th,.data-table td{padding:8px 10px}
+  .hide-mobile{display:none !important}
+}
+
+@media(max-width:600px){
+  .stats-row .stat-card{min-width:100%;flex:none}
+  .topnav-search-wrap{display:none}
+  .main{padding:12px !important}
+  .page-header-right .btn{width:100%;justify-content:center}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+
 </style>
 </head>
 <body>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <!-- TOP NAV -->
 <nav class="topnav">

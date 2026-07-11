@@ -4,6 +4,10 @@ $active_page = 'schools';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
+// ── DATA ISOLATION ────────────────────────────────────────────
+// School users: only see their own school
+// Company users: redirected away (they use Partners page)
+// Admin: sees everything
 $scope_school = null;
 if (!is_admin()) {
     if (($_SESSION['user_type']??'') === 'company') {
@@ -353,7 +357,11 @@ include 'includes/header.php';
     <tbody id="school-tbody">
       <?php foreach($schools as $s): ?>
       <tr>
-        <td class="cell-name"><?= htmlspecialchars($s['name']) ?></td>
+        <td class="cell-name">
+                <a href="school_profile.php?id=<?= $s['id'] ?>" style="color:var(--text);text-decoration:none;font-weight:600">
+                  <?= htmlspecialchars($s['name']) ?>
+                </a>
+              </td>
         <td><?= htmlspecialchars($s['province']??'—') ?></td>
         <td style="font-size:12px;color:var(--text-muted)"><?= htmlspecialchars($s['district']??'—') ?></td>
         <td style="font-size:12px"><?= htmlspecialchars($s['school_type']??'—') ?></td>

@@ -5,6 +5,11 @@ require_once 'includes/auth.php';
 require_once 'includes/db.php';
 include 'includes/header.php';
 
+// ── PARTNER FILTER MODE ────────────────────────────────────────
+// When ?partner_id=X is present, this page behaves like the old
+// partner_detail.php: shows only that partner's projects, grouped
+// by school, with the same data-isolation rule (company users can
+// only view their own partner_id).
 $filter_partner_id = (int)($_GET['partner_id'] ?? 0);
 $viewing_partner    = null;
 
@@ -255,7 +260,11 @@ function calcProgress($start, $end, $status) {
         <td style="color:var(--text-muted);font-size:12.5px"><?= htmlspecialchars($p['sector'] ?? '—') ?></td>
         <td><?= htmlspecialchars($p['focus_area']) ?></td>
         <td style="text-align:center">
-          <span style="font-weight:600;color:var(--teal)"><?= htmlspecialchars($p['school_name']) ?></span>
+          <span style="font-weight:600;color:var(--teal)">
+            <a href="school_profile.php?id=<?= $p['school_id'] ?>" style="color:var(--teal);text-decoration:none">
+              <?= htmlspecialchars($p['school_name']) ?>
+            </a>
+          </span>
         </td>
         <?php if (can_view_financials()): ?>
           <td style="font-weight:700;color:var(--orange)">R<?= number_format($p['amount']/1000)?>k</td>
@@ -441,5 +450,57 @@ document.addEventListener('click', function(e) {
   }
 });
 </script>
+
+<?php
+// Show pledge status for company users
+if (!is_admin() && ($_SESSION['user_type']??'')==='company' && $linked_id): 
+    $my_pledges = $pdo->prepare("
+        SELECT np.*, sn.title AS need_title, sn.amount_needed,
+               s.name AS school_name, m.file_name AS mou_file
+        FROM need_pledges np
+        JOIN school_needs sn ON sn.id=np.need_id
+        JOIN schools s ON s.id=sn.school_id
+        LEFT JOIN mous m ON m.pledge_id=np.id
+        WHERE np.company_id=?
+        ORDER BY np.created_at DESC
+    ");
+    $my_pledges->execute([$linked_id]);
+    $my_pledges = $my_pledges->fetchAll();
+    if (!empty($my_pledges)): ?>
+<div class="widget" style="margin-top:24px">
+  <div class="widget-title"><i class="ti ti-heart-handshake" style="color:var(--orange)"></i> My Funding Pledges</div>
+  <table class="data-table">
+    <thead><tr><th>School</th><th>Need</th><th>Amount</th><th>Status</th><th>MOU</th></tr></thead>
+    <tbody>
+    <?php foreach($my_pledges as $pl):
+      $sc = ['pending'=>['#fffbea','#9a6700'],'confirmed'=>['var(--teal-soft)','#00956a'],'declined'=>['#fde9e9','#c53030']][$pl['status']]??['var(--surface)','var(--text-muted)'];
+    ?>
+    <tr>
+      <td class="cell-name"><?= htmlspecialchars($pl['school_name']) ?></td>
+      <td style="font-size:12.5px"><?= htmlspecialchars($pl['need_title']) ?></td>
+      <td style="font-weight:700;color:var(--orange)">R<?= number_format($pl['amount']) ?></td>
+      <td>
+        <span style="background:<?= $sc[0] ?>;color:<?= $sc[1] ?>;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600">
+          <?= ucfirst($pl['status']) ?>
+        </span>
+        <?php if($pl['status']==='pending'): ?>
+        <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px">Awaiting Research Unlimited confirmation</div>
+        <?php endif; ?>
+      </td>
+      <td>
+        <?php if($pl['status']==='confirmed' && $pl['mou_file']): ?>
+        <a href="mou_generate.php?pledge_id=<?= $pl['id'] ?>" class="btn btn-secondary" style="font-size:11px;padding:4px 10px">
+          <i class="ti ti-file-certificate"></i> View MOU
+        </a>
+        <?php else: ?>
+        <span style="font-size:11.5px;color:var(--text-muted)">—</span>
+        <?php endif; ?>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; endif; ?>
 
 <?php include 'includes/footer.php'; ?>

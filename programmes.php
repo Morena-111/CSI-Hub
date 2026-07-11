@@ -16,7 +16,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $subject = "CSI Hub Enquiry — {$prog} — {$company}";
     $body    = "Company: {$company}\nContact: {$contact}\nEmail: {$email}\nProgramme: {$prog}\nBudget: R{$budget}\nMessage: {$message}";
     $headers = "From: noreply@researchunlimitedsa.co.za\r\nReply-To: {$email}\r\n";
-    @mail('info@researchunlimitedsa.co.za', $subject, $body, $headers);
+    send_email(SITE_EMAIL, $subject, $body);
+    // Save to requests log
+    $req_file = __DIR__.'/data/programme_requests.json';
+    $reqs = file_exists($req_file) ? json_decode(file_get_contents($req_file),true)??[] : [];
+    $reqs[] = [
+        'company'      => $_POST['company']??'',
+        'contact'      => $_POST['contact']??'',
+        'email'        => $_POST['email']??'',
+        'phone'        => $_POST['phone']??'',
+        'programme'    => $_POST['programme']??'',
+        'province'     => $_POST['province']??'',
+        'schools_count'=> $_POST['schools_count']??'',
+        'message'      => $_POST['message']??'',
+        'date'         => date('d M Y H:i'),
+        'status'       => 'pending',
+    ];
+    if(!is_dir(__DIR__.'/data')) mkdir(__DIR__.'/data',0755,true);
+    file_put_contents($req_file, json_encode($reqs, JSON_PRETTY_PRINT));
     $enquiry_success = "Thank you! We will contact you within 2 business days.";
 }
 
@@ -40,58 +57,100 @@ if ($is_company && $linked_id) {
 // Real RU programmes based on their actual services
 $programmes = [
     [
-        'icon'    => 'ti-school',
-        'color'   => '#E8541A',
-        'bg'      => '#fdf0ea',
-        'title'   => 'CSI Research & Monitoring',
-        'tag'     => 'Core Service',
-        'desc'    => 'Research Unlimited designs and conducts research-driven CSI programmes for corporate partners. We use data-informed approaches to measure impact, track learner outcomes, and produce credible evidence of social change.',
-        'items'   => ['Programme design & needs analysis','Baseline & endline assessments','Monthly monitoring visits to schools','Impact measurement & evaluation','BBBEE compliance documentation','Quarterly & annual impact reports'],
+        'icon'  => 'ti-school',
+        'color' => '#6c5ce7',
+        'bg'    => '#f0eeff',
+        'title' => 'Postgraduate Success & Leadership Development Training',
+        'tag'   => 'Leadership',
+        'desc'  => "A structured programme equipping postgraduate students and emerging leaders with the skills, mindset and networks to succeed in academia and the professional world. Aligned to the SDGs and South Africa's national development agenda.",
+        'items' => [
+            'Leadership skills development',
+            'Academic research & writing support',
+            'Career readiness & professional coaching',
+            'Networking & mentorship opportunities',
+            'Postgraduate study support',
+            'M&E and impact reporting',
+        ],
     ],
     [
-        'icon'    => 'ti-book',
-        'color'   => '#6c5ce7',
-        'bg'      => '#f0eeff',
-        'title'   => 'Education Research Programme',
-        'tag'     => 'Education Focus',
-        'desc'    => 'Focused on the SDGs, we design educational awareness programmes addressing critical skills gaps. We showcase and communicate education policy within the education and social space — from early grades through to matric.',
-        'items'   => ['STEM & Mathematics support programmes','Literacy & reading interventions','Life skills & career readiness','Teacher development workshops','E3 Entrepreneurship, Employability & Education','Curriculum-aligned educational content'],
+        'icon'  => 'ti-recycle',
+        'color' => '#00956a',
+        'bg'    => '#e6faf5',
+        'title' => 'School Waste Management Program',
+        'tag'   => 'Environment',
+        'desc'  => "An environmental education initiative equipping schools with knowledge, tools and systems to reduce waste, recycle responsibly and build a culture of environmental stewardship. Contributes to SDG 12 (Responsible Consumption and Production).",
+        'items' => [
+            'Waste audit & baseline assessment',
+            'Learner-led recycling clubs',
+            'Teacher training on environmental education',
+            'Waste reduction campaigns',
+            'Reporting on waste diverted',
+            'B-BBEE SED compliance documentation',
+        ],
     ],
     [
-        'icon'    => 'ti-chart-bar',
-        'color'   => '#00956a',
-        'bg'      => '#e6faf5',
-        'title'   => 'Business Research CSI',
-        'tag'     => 'Business Intelligence',
-        'desc'    => 'We provide detailed researched data analysis to help companies maximise their CSI investment. From community needs assessments to ROI on social investment, we turn data into decisions.',
-        'items'   => ['Community needs assessments','CSI strategy development','Social return on investment (SROI) analysis','Stakeholder mapping & engagement','Policy research & reporting','NPO & NGO partnership facilitation'],
+        'icon'  => 'ti-bolt',
+        'color' => '#f5a623',
+        'bg'    => '#fffbea',
+        'title' => 'Power UP: Schools for a Sustainable Future',
+        'tag'   => 'Sustainability',
+        'desc'  => "An energy and sustainability programme empowering schools to adopt clean energy practices, reduce their carbon footprint and teach learners about renewable energy and sustainable living. Aligned to SDG 7 (Affordable and Clean Energy).",
+        'items' => [
+            'Solar energy awareness & education',
+            'Energy efficiency audits at schools',
+            'Learner sustainability projects',
+            'STEM integration with energy topics',
+            'Community awareness campaigns',
+            'Quarterly progress and impact reporting',
+        ],
     ],
     [
-        'icon'    => 'ti-users',
-        'color'   => '#2dbcd8',
-        'bg'      => '#e8f8fc',
-        'title'   => 'Tutoring & Academic Support',
-        'tag'     => 'Academic Development',
-        'desc'    => 'Our qualified and experienced tutors provide comprehensive online, home-based and office-based tutoring and consultation services to learners at beneficiary schools — from Grade 1 through to postgraduate level.',
-        'items'   => ['Home-based & online tutoring','Mathematics & Science focus','Academic consultation services','Postgraduate research support','Group tutoring sessions at schools','Progress tracking & reporting to funders'],
+        'icon'  => 'ti-briefcase',
+        'color' => '#E8541A',
+        'bg'    => '#fdf0ea',
+        'title' => 'Youth Employability Program',
+        'tag'   => 'Youth Empowerment',
+        'desc'  => "A comprehensive youth development programme bridging the gap between education and employment. Builds practical, digital and interpersonal skills employers demand — contributing to SDG 8 (Decent Work and Economic Growth).",
+        'items' => [
+            'CV writing & job application skills',
+            'Interview preparation & confidence building',
+            'Digital literacy & computer skills',
+            'Entrepreneurship & small business basics',
+            'Workplace readiness workshops',
+            'Linkage to SETA-accredited training',
+        ],
     ],
     [
-        'icon'    => 'ti-briefcase',
-        'color'   => '#f5a623',
-        'bg'      => '#fffbea',
-        'title'   => 'Skills Development Programme',
-        'tag'     => 'Youth Empowerment',
-        'desc'    => 'Supporting SDG goals, we run skills development programmes targeting youth and women. From entrepreneurship skills to employability training, we invest in building a more resilient and equitable society.',
-        'items'   => ['Youth entrepreneurship training','Employability & workplace readiness','Digital skills & technology literacy','Women empowerment workshops','Job creation awareness programmes','Linkage to SETA & accredited training'],
+        'icon'  => 'ti-atom',
+        'color' => '#2dbcd8',
+        'bg'    => '#e8f8fc',
+        'title' => 'Polymer Innovation & Circular Education Program',
+        'tag'   => 'Innovation & STEM',
+        'desc'  => "A cutting-edge STEM programme introducing learners to polymer science, materials innovation and circular economy thinking. Developed in partnership with industry to give South African learners exposure to real-world science — supporting SDG 4 and SDG 9.",
+        'items' => [
+            'Polymer science workshops for learners',
+            'Circular economy & recycling education',
+            'Industry site visits & exposure',
+            'Hands-on science experiments',
+            'Teacher upskilling in STEM subjects',
+            'Innovation challenge competitions',
+        ],
     ],
     [
-        'icon'    => 'ti-report-analytics',
-        'color'   => '#0d1e3d',
-        'bg'      => '#eef1f6',
-        'title'   => 'M&E Reporting & Compliance',
-        'tag'     => 'Reporting',
-        'desc'    => 'Research Unlimited produces credible, professional M&E reports for corporate partners to satisfy board requirements, BBBEE scorecards, and shareholder reporting. Quality, reliability and results — every report.',
-        'items'   => ['BBBEE socio-economic development reports','Annual CSI impact reports','Site visit reports with photographic evidence','Learner & educator headcount verification','Financial expenditure tracking','Board-ready presentation packs'],
+        'icon'  => 'ti-shield-heart',
+        'color' => '#e91e8c',
+        'bg'    => '#fce4ec',
+        'title' => 'Education Awareness: GBV Initiative',
+        'tag'   => 'GBV Awareness',
+        'desc'  => "A gender-based violence awareness and prevention programme delivered in schools and communities. Educates learners, educators and parents on signs of GBV, available support resources and building safer school environments — aligned to SDG 5 and SDG 16.",
+        'items' => [
+            'GBV awareness workshops for learners',
+            'Safe space facilitation in schools',
+            'Educator & parent sensitisation sessions',
+            'Referral pathways to support services',
+            'Reporting on reach and awareness levels',
+            'Collaboration with NGOs and government',
+        ],
     ],
 ];
 
@@ -220,6 +279,39 @@ $school_c = count(array_unique(array_column($my_partnerships,'school_id')));
 </div>
 
 <?php else: ?>
+<!-- ══ ADMIN — PROGRAMME REQUESTS ══ -->
+<?php if(is_admin()):
+// Load enquiry requests from data file
+$req_file = __DIR__.'/data/programme_requests.json';
+$requests = file_exists($req_file) ? json_decode(file_get_contents($req_file),true)??[] : [];
+if(!empty($requests)): ?>
+<div class="widget" style="margin-bottom:22px">
+  <div class="widget-title"><i class="ti ti-inbox" style="color:var(--orange)"></i>
+    Programme Requests
+    <span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:8px"><?= count($requests) ?> pending</span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Company</th><th>Contact</th><th>Programme</th><th>Province</th><th>Schools</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>
+    <?php foreach(array_reverse($requests) as $req): ?>
+    <tr>
+      <td class="cell-name"><?= htmlspecialchars($req['company']??'—') ?></td>
+      <td style="font-size:12px">
+        <?= htmlspecialchars($req['contact']??'—') ?><br>
+        <span style="color:var(--text-muted)"><?= htmlspecialchars($req['email']??'') ?></span>
+      </td>
+      <td><?= htmlspecialchars($req['programme']??'—') ?></td>
+      <td style="font-size:12px"><?= htmlspecialchars($req['province']??'—') ?></td>
+      <td style="font-size:12px"><?= htmlspecialchars($req['schools_count']??'—') ?></td>
+      <td style="font-size:12px;color:var(--text-muted)"><?= htmlspecialchars($req['date']??'—') ?></td>
+      <td><span class="status-badge pending">Pending</span></td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; endif; ?>
+
 <!-- ══ ADMIN / ALL USERS — FULL PROGRAMME CATALOGUE ══ -->
 <div class="page-header">
   <div>
@@ -342,7 +434,7 @@ $school_c = count(array_unique(array_column($my_partnerships,'school_id')));
             display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
   <div>
     <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">
-      Ready to invest in South Africa's future?
+      Ready to invest in South Africa\'s future?
     </h3>
     <p style="font-size:12.5px;color:var(--text-muted)">
       Mon–Sat 8:00am–17:00pm · <a href="tel:+27680245514" style="color:var(--orange);font-weight:600">+27 68 024 5514</a> ·
@@ -390,13 +482,28 @@ $school_c = count(array_unique(array_column($my_partnerships,'school_id')));
           <input class="form-input" type="email" name="email" placeholder="you@company.co.za" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Estimated Budget (R)</label>
-          <input class="form-input" type="text" name="budget" placeholder="e.g. 500 000">
+          <label class="form-label">Phone Number *</label>
+          <input class="form-input" type="tel" name="phone" placeholder="079 xxx xxxx" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Target Province(s)</label>
+          <select class="form-select" name="province">
+            <option value="">Select province…</option>
+            <?php foreach(['Gauteng','KwaZulu-Natal','Western Cape','Eastern Cape','Limpopo','Mpumalanga','North West','Free State','Northern Cape'] as $pv): ?>
+            <option><?= $pv ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Number of Schools Targeted</label>
+          <input class="form-input" type="text" name="schools_count" placeholder="e.g. 3 schools">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Tell us about your goals</label>
-        <textarea class="form-input" name="message" rows="3" placeholder="Number of schools, provinces, focus areas, timeline…"></textarea>
+        <label class="form-label">What do you hope to achieve through this programme?</label>
+        <textarea class="form-input" name="message" rows="3" placeholder="e.g. Improve STEM results in 5 rural schools, reach 2000 learners by end of 2026…"></textarea>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal('enquire-modal')">Cancel</button>

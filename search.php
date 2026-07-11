@@ -1,6 +1,11 @@
 <?php
 /**
- * search.php
+ * search.php — Global search API
+ * Place in: C:\xampp\htdocs\csi-hub\search.php
+ *
+ * Searches across: Partners, Schools, Partnerships, Documents,
+ * Events, Surveys, Team Members, Programmes — respecting the
+ * same data isolation rules as the rest of the platform.
  */
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
