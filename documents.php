@@ -113,8 +113,6 @@ $partnerships_list = $pdo->query("
 
 // Stats
 $total_docs = $pdo->query("SELECT COUNT(*) FROM documents")->fetchColumn();
-$cats       = $pdo->query("SELECT category, COUNT(*) AS cnt FROM documents GROUP BY category")->fetchAll();
-$total_size = $pdo->query("SELECT COALESCE(SUM(file_size),0) FROM documents")->fetchColumn();
 
 $file_icons = [
     'pdf'  => ['ti-file-type-pdf',  '#e53e3e'],
@@ -159,6 +157,7 @@ $file_icons = [
       <p>MOUs, reports, proposals and programme files</p>
     </div>
     <div class="page-header-right">
+    <a href="document_wizard.php" class="btn btn-primary"><i class="ti ti-upload"></i> Upload Document</a>
       <?php if(!is_admin()): ?>
       <a href="document_wizard.php" class="btn btn-primary">
         <i class="ti ti-checklist"></i> Submit Required Documents
@@ -230,15 +229,9 @@ $file_icons = [
       <div class="stat-value orange"><?= $total_docs ?></div>
       <div class="stat-sub">All files</div>
     </div>
-    <div class="stat-card teal">
-      <div class="stat-label">Categories</div>
-      <div class="stat-value teal"><?= count($cats) ?></div>
-      <div class="stat-sub">Document types</div>
+    <div class="stat-sub">Document types</div>
     </div>
-    <div class="stat-card purple">
-      <div class="stat-label">Total Size</div>
-      <div class="stat-value" style="font-size:22px"><?= $total_size > 1048576 ? round($total_size/1048576,1).'MB' : round($total_size/1024).'KB' ?></div>
-      <div class="stat-sub">Storage used</div>
+    <div class="stat-sub">Storage used</div>
     </div>
   </div>
 

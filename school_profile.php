@@ -1,5 +1,5 @@
 <?php
-$active_page = 'browse_schools';
+$active_page = 'schools';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
@@ -73,7 +73,7 @@ include 'includes/header.php';
 <div class="page-banner">
   <i class="ti ti-home"></i>
   <span style="color:var(--text-muted)">Home</span> <span style="color:var(--border)">›</span>
-  <a href="browse_schools.php" style="color:var(--text-muted)">Browse Schools</a>
+  <a href="schools.php" style="color:var(--text-muted)">Schools</a>
   <span style="color:var(--border)">›</span>
   <span class="active-crumb"><?= htmlspecialchars($school['name']) ?></span>
 </div>

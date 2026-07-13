@@ -111,6 +111,7 @@ if ($is_school && $linked_id) {
     $s2=$pdo->prepare("SELECT COALESCE(SUM(amount),0) FROM partnerships WHERE school_id=?"); $s2->execute([$linked_id]);
     $s3=$pdo->prepare("SELECT COUNT(*) FROM school_needs WHERE school_id=? AND status='open'"); $s3->execute([$linked_id]);
     $s4=$pdo->prepare("SELECT COUNT(*) FROM documents WHERE school_id=? AND status='pending'"); $s4->execute([$linked_id]);
+    $s4t=$pdo->prepare("SELECT COUNT(*) FROM documents WHERE school_id=?"); $s4t->execute([$linked_id]);
     $s5=$pdo->prepare("SELECT COUNT(*) FROM need_pledges np JOIN school_needs sn ON sn.id=np.need_id WHERE sn.school_id=? AND np.status='pending'"); $s5->execute([$linked_id]);
     $s6=$pdo->prepare("SELECT * FROM school_needs WHERE school_id=? ORDER BY priority DESC, created_at DESC LIMIT 5"); $s6->execute([$linked_id]);
     $s7=$pdo->prepare("SELECT p.*, c.name AS company_name FROM partnerships p JOIN companies c ON c.id=p.company_id WHERE p.school_id=? ORDER BY p.status LIMIT 5"); $s7->execute([$linked_id]);
@@ -119,6 +120,7 @@ if ($is_school && $linked_id) {
         'funded'      => (float)$s2->fetchColumn(),
         'needs_open'  => (int)$s3->fetchColumn(),
         'docs_pend'   => (int)$s4->fetchColumn(),
+        'docs_total'  => (int)$s4t->fetchColumn(),
         'pledges_pend'=> (int)$s5->fetchColumn(),
     ];
     $sc_needs    = $s6->fetchAll();
@@ -282,8 +284,7 @@ include 'includes/header.php';
     ['Active Programmes', $co_stats['active_p'],             'var(--orange)', 'ti-activity'],
     ['Schools Reached',   $co_stats['schools'],              'var(--teal)',   'ti-school'],
     ['Total Invested',    'R'.number_format($co_stats['invested']),'var(--gold)', 'ti-currency-rand'],
-    ['Pending Pledges',   $co_stats['pledges'],              '#6c5ce7',      'ti-heart-handshake'],
-    ['Docs Pending',      $co_stats['docs_pend'],            'var(--orange)', 'ti-file-alert'],
+    ['Docs Approved',     ($co_stats['docs_total']??0) > 0 ? round((($co_stats['docs_total']-($co_stats['docs_pend']??0))/$co_stats['docs_total'])*100).'%' : '0%', 'var(--teal)', 'ti-file-check'],
   ] as [$l,$v,$c,$ic]): ?>
   <div class="stat-card" style="flex:1">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -338,7 +339,7 @@ include 'includes/header.php';
 </div>
 
 <div style="display:flex;gap:12px;flex-wrap:wrap">
-  <a href="browse_schools.php" class="btn btn-primary"><i class="ti ti-school"></i> Browse Schools to Fund</a>
+  <a href="schools.php" class="btn btn-primary"><i class="ti ti-school"></i> View Schools</a>
   <a href="programmes.php" class="btn btn-secondary"><i class="ti ti-activity"></i> View Programmes</a>
   <a href="documents.php" class="btn btn-secondary"><i class="ti ti-file"></i> My Documents</a>
 </div>
@@ -381,7 +382,7 @@ if (!$survey_done): ?>
     ['Total Funded',     'R'.number_format($sc_stats['funded']), 'var(--teal)', 'ti-currency-rand'],
     ['Open Needs',       $sc_stats['needs_open'],            '#6c5ce7',      'ti-heart-handshake'],
     ['Pending Pledges',  $sc_stats['pledges_pend'],          'var(--gold)',   'ti-coin'],
-    ['Docs Pending',     $sc_stats['docs_pend'],             'var(--orange)', 'ti-file-alert'],
+    ['Docs Approved',    ($sc_stats['docs_total']??0) > 0 ? round((($sc_stats['docs_total']-($sc_stats['docs_pend']??0))/$sc_stats['docs_total'])*100).'%' : '0%', 'var(--teal)', 'ti-file-check'],
   ] as [$l,$v,$c,$ic]): ?>
   <div class="stat-card" style="flex:1">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">

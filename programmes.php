@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     if(!is_dir(__DIR__.'/data')) mkdir(__DIR__.'/data',0755,true);
     file_put_contents($req_file, json_encode($reqs, JSON_PRETTY_PRINT));
-    $enquiry_success = "Thank you! We will contact you within 2 business days.";
+    $enquiry_success = "Thank you! We will contact you within 3 business days.";
 }
 
 $is_company = (!is_admin() && ($_SESSION['user_type']??'') === 'company');
@@ -57,7 +57,7 @@ if ($is_company && $linked_id) {
 // Real RU programmes based on their actual services
 $programmes = [
     [
-        'icon'  => 'ti-school',
+        'icon'  => 'ti-id',
         'color' => '#6c5ce7',
         'bg'    => '#f0eeff',
         'title' => 'Postgraduate Success & Leadership Development Training',
@@ -73,7 +73,7 @@ $programmes = [
         ],
     ],
     [
-        'icon'  => 'ti-recycle',
+        'icon'  => 'ti-leaf',
         'color' => '#00956a',
         'bg'    => '#e6faf5',
         'title' => 'School Waste Management Program',
@@ -89,7 +89,7 @@ $programmes = [
         ],
     ],
     [
-        'icon'  => 'ti-bolt',
+        'icon'  => 'ti-solar-panel',
         'color' => '#f5a623',
         'bg'    => '#fffbea',
         'title' => 'Power UP: Schools for a Sustainable Future',
@@ -105,7 +105,7 @@ $programmes = [
         ],
     ],
     [
-        'icon'  => 'ti-briefcase',
+        'icon'  => 'ti-user-star',
         'color' => '#E8541A',
         'bg'    => '#fdf0ea',
         'title' => 'Youth Employability Program',
@@ -121,7 +121,7 @@ $programmes = [
         ],
     ],
     [
-        'icon'  => 'ti-atom',
+        'icon'  => 'ti-flask',
         'color' => '#2dbcd8',
         'bg'    => '#e8f8fc',
         'title' => 'Polymer Innovation & Circular Education Program',
@@ -137,7 +137,7 @@ $programmes = [
         ],
     ],
     [
-        'icon'  => 'ti-shield-heart',
+        'icon'  => 'ti-heart',
         'color' => '#e91e8c',
         'bg'    => '#fce4ec',
         'title' => 'Education Awareness: GBV Initiative',
@@ -182,7 +182,7 @@ include 'includes/header.php';
     <p>Your active CSI programmes managed by Research Unlimited</p>
   </div>
   <button class="btn btn-primary" onclick="openModal('enquire-modal')">
-    <i class="ti ti-plus"></i> Enquire About More
+    <i class="ti ti-heart"></i> Interested
   </button>
 </div>
 
@@ -319,7 +319,7 @@ if(!empty($requests)): ?>
     <p>Research Unlimited — Research Made Easy · <a href="https://researchunlimitedsa.co.za" target="_blank" style="color:var(--orange)">researchunlimitedsa.co.za</a></p>
   </div>
   <button class="btn btn-primary" onclick="openModal('enquire-modal')">
-    <i class="ti ti-send"></i> Enquire Now
+    <i class="ti ti-heart"></i> Interested
   </button>
 </div>
 
@@ -400,7 +400,7 @@ if(!empty($requests)): ?>
     <!-- Feature list -->
     <div style="padding:18px 20px;flex:1;border-right:1px solid var(--border)">
       <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;
-                  letter-spacing:.06em;margin-bottom:10px">What's included</div>
+                  letter-spacing:.06em;margin-bottom:10px">Deliverables</div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <?php foreach($prog['items'] as $item): ?>
         <div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--text)">
@@ -417,7 +417,7 @@ if(!empty($requests)): ?>
       <button class="btn btn-primary"
               style="font-size:12px;padding:8px 16px;justify-content:center;width:100%"
               onclick="document.getElementById('enquire-prog').value='<?= htmlspecialchars($prog['title'],ENT_QUOTES) ?>';openModal('enquire-modal')">
-        <i class="ti ti-send"></i> Enquire
+        <i class="ti ti-heart"></i> Interested
       </button>
       <div style="font-size:10.5px;color:var(--text-muted);text-align:center;line-height:1.4">
         Quoted based on scope and number of schools
@@ -453,8 +453,8 @@ if(!empty($requests)): ?>
 <div class="modal-overlay" id="enquire-modal" onclick="if(event.target.id==='enquire-modal')closeModal('enquire-modal')">
   <div class="modal" style="max-width:520px">
     <button class="modal-close" onclick="closeModal('enquire-modal')"><i class="ti ti-x"></i></button>
-    <h2>Programme Enquiry</h2>
-    <div class="modal-sub">Tell us about your CSI goals. We respond within 2 business days.</div>
+    <h2>Programme Information</h2>
+    <div class="modal-sub">Tell us about your CSI goals. We respond within 3 business days.</div>
     <form method="POST">
       <input type="hidden" name="enquiry_type" value="programme">
       <div class="form-group">
@@ -468,16 +468,6 @@ if(!empty($requests)): ?>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Company / Organisation *</label>
-          <input class="form-input" type="text" name="company" placeholder="Your company name" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Contact Person *</label>
-          <input class="form-input" type="text" name="contact" placeholder="Full name" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
           <label class="form-label">Email Address *</label>
           <input class="form-input" type="email" name="email" placeholder="you@company.co.za" required>
         </div>
@@ -486,28 +476,13 @@ if(!empty($requests)): ?>
           <input class="form-input" type="tel" name="phone" placeholder="079 xxx xxxx" required>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Target Province(s)</label>
-          <select class="form-select" name="province">
-            <option value="">Select province…</option>
-            <?php foreach(['Gauteng','KwaZulu-Natal','Western Cape','Eastern Cape','Limpopo','Mpumalanga','North West','Free State','Northern Cape'] as $pv): ?>
-            <option><?= $pv ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Number of Schools Targeted</label>
-          <input class="form-input" type="text" name="schools_count" placeholder="e.g. 3 schools">
-        </div>
-      </div>
       <div class="form-group">
         <label class="form-label">What do you hope to achieve through this programme?</label>
         <textarea class="form-input" name="message" rows="3" placeholder="e.g. Improve STEM results in 5 rural schools, reach 2000 learners by end of 2026…"></textarea>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal('enquire-modal')">Cancel</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> Send Enquiry</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> Send</button>
       </div>
     </form>
   </div>
