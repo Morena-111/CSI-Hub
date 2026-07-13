@@ -157,11 +157,13 @@ $file_icons = [
       <p>MOUs, reports, proposals and programme files</p>
     </div>
     <div class="page-header-right">
-    <a href="document_wizard.php" class="btn btn-primary"><i class="ti ti-upload"></i> Upload Document</a>
+    <!-- <a href="document_wizard.php" class="btn btn-primary"><i class="ti ti-upload"></i> Upload Document</a> -->
       <?php if(!is_admin()): ?>
+        <!--
       <a href="document_wizard.php" class="btn btn-primary">
         <i class="ti ti-checklist"></i> Submit Required Documents
       </a>
+      -->
       <button class="btn btn-secondary" onclick="openModal('upload-modal')">
         <i class="ti ti-upload"></i> Quick Upload
       </button>
@@ -229,10 +231,7 @@ $file_icons = [
       <div class="stat-value orange"><?= $total_docs ?></div>
       <div class="stat-sub">All files</div>
     </div>
-    <div class="stat-sub">Document types</div>
-    </div>
-    <div class="stat-sub">Storage used</div>
-    </div>
+    <div class="stat-sub"></div>
   </div>
 
   <!-- FILTERS -->
@@ -262,9 +261,7 @@ $file_icons = [
     <i class="ti ti-files" style="font-size:48px;opacity:.3;display:block;margin-bottom:12px"></i>
     <p style="font-size:14px">No documents yet.</p>
       <?php if(!is_admin()): ?>
-      <button class="btn btn-primary" style="margin-top:14px" onclick="openModal('upload-modal')">
-        <i class="ti ti-upload"></i> Upload your first document
-      </button>
+      
       <?php endif; ?>
   </div>
   <?php else: ?>

@@ -338,11 +338,13 @@ include 'includes/header.php';
   </div>
 </div>
 
+<!--
 <div style="display:flex;gap:12px;flex-wrap:wrap">
   <a href="schools.php" class="btn btn-primary"><i class="ti ti-school"></i> View Schools</a>
   <a href="programmes.php" class="btn btn-secondary"><i class="ti ti-activity"></i> View Programmes</a>
   <a href="documents.php" class="btn btn-secondary"><i class="ti ti-file"></i> My Documents</a>
 </div>
+-->
 
 <!-- ══════════════ SCHOOL DASHBOARD ══════════════ -->
 <?php elseif ($is_school && $linked_id): ?>
@@ -435,11 +437,7 @@ if (!$survey_done): ?>
   </div>
 </div>
 
-<div style="display:flex;gap:12px;flex-wrap:wrap">
-  <a href="school_needs.php" class="btn btn-primary"><i class="ti ti-plus"></i> Post a Need</a>
-  <a href="documents.php" class="btn btn-secondary"><i class="ti ti-file"></i> My Documents</a>
-  <a href="programmes.php" class="btn btn-secondary"><i class="ti ti-activity"></i> Programmes</a>
-</div>
+
 
 <?php else: ?>
 <!-- General user -->
