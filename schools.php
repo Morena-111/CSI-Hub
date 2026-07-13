@@ -6,13 +6,10 @@ require_once 'includes/db.php';
 
 // ── DATA ISOLATION ────────────────────────────────────────────
 // School users: only see their own school
-// Company users: redirected away (they use Partners page)
+// Companies can browse all schools; school users see only their own
 // Admin: sees everything
 $scope_school = null;
 if (!is_admin()) {
-    if (($_SESSION['user_type']??'') === 'company') {
-        redirect('partners.php'); 
-    }
     if (($_SESSION['user_type']??'') === 'school' && isset($_SESSION['linked_id'])) {
         $scope_school = (int)$_SESSION['linked_id'];
     }
