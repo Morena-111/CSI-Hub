@@ -93,7 +93,7 @@ if (is_admin()) {
     </div>
     <a href="tel:+27795343798" class="sidebar-help-item">
       <i class="ti ti-phone"></i>
-      <span>079 534 3798</span>
+      <span>068 024 5514</span>
     </a>
     <a href="mailto:lwandile@researchunlimited.co.za" class="sidebar-help-item">
       <i class="ti ti-mail"></i>
@@ -109,7 +109,7 @@ if (is_admin()) {
     </div>
     <a href="tel:+27795343798" class="sidebar-help-item">
       <i class="ti ti-phone"></i>
-      <span>079 534 3798</span>
+      <span>068 024 5514</span>
     </a>
     <a href="mailto:helpdesk@researchunlimited.co.za" class="sidebar-help-item">
       <i class="ti ti-mail"></i>
