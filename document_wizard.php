@@ -3,7 +3,7 @@ $active_page = 'documents';
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
-// ── WIZARD STEPS DEFINITION ───────────────────────────────────
+// WIZARD STEPS DEFINITION
 $steps = [
     1 => [
         'title'       => 'Company Registration',

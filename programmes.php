@@ -278,7 +278,9 @@ $school_c = count(array_unique(array_column($my_partnerships,'school_id')));
 <?php endforeach; ?>
 </div>
 
-<?php else: ?>
+<!-- Always show the full RU programme catalogue below active partnerships -->
+<?php endif; ?>
+
 <!-- ══ ADMIN — PROGRAMME REQUESTS ══ -->
 <?php if(is_admin()):
 // Load enquiry requests from data file
@@ -310,12 +312,12 @@ if(!empty($requests)): ?>
     </tbody>
   </table>
 </div>
-<?php endif; endif; ?>
+<?php endif; ?>
 
-<!-- ══ ADMIN / ALL USERS — FULL PROGRAMME CATALOGUE ══ -->
-<div class="page-header">
+<!-- ══ FULL PROGRAMME CATALOGUE — shown to all users ══ -->
+<div class="page-header" style="margin-top:<?= ($is_company && !empty($my_partnerships)) ? '28px' : '0' ?>">
   <div>
-    <h1>Our Programmes</h1>
+    <h1><?= ($is_company && !empty($my_partnerships)) ? 'Our Programmes' : 'Our Programmes' ?></h1>
     <p>Research Unlimited — Research Made Easy · <a href="https://researchunlimitedsa.co.za" target="_blank" style="color:var(--orange)">researchunlimitedsa.co.za</a></p>
   </div>
   <button class="btn btn-primary" onclick="openModal('enquire-modal')">
@@ -446,8 +448,6 @@ if(!empty($requests)): ?>
     <i class="ti ti-rocket"></i> Get Started Today
   </button>
 </div>
-
-<?php endif; ?>
 
 <!-- ══ ENQUIRY MODAL ══ -->
 <div class="modal-overlay" id="enquire-modal" onclick="if(event.target.id==='enquire-modal')closeModal('enquire-modal')">

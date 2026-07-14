@@ -1,7 +1,6 @@
 <?php
 /**
- * approve_user.php — Approve or reject a user access request
- * Place in: C:\xampp\htdocs\CSI-Hub\approve_user.php
+ * approve_user.php
  */
 require_once 'includes/auth.php';
 require_admin_role();
@@ -21,7 +20,7 @@ if ($username && isset($pending[$username])) {
     if ($action === 'approve') {
         $u = $pending[$username];
 
-        // ── AUTO-CREATE COMPANY RECORD (only for company users) ──
+        // AUTO-CREATE COMPANY RECORD (only for company users)
         if ($user_type === 'company' && !$linked_id) {
             $stmt = $pdo->prepare("
                 INSERT INTO companies (name, sector, status, created_at)
@@ -40,7 +39,6 @@ if ($username && isset($pending[$username])) {
             }
         }
 
-        // ── AUTO-CREATE SCHOOL RECORD ─────────────────────────
         if ($user_type === 'school' && !$linked_id) {
             $funding = (float)str_replace([',','R',' '], '', $u['funding_needed'] ?? 0);
             $stmt = $pdo->prepare("
@@ -81,7 +79,6 @@ if ($username && isset($pending[$username])) {
         $pending[$username]['approved_at'] = date('Y-m-d H:i:s');
         $pending[$username]['approved_by'] = $_SESSION['name'] ?? 'Admin';
 
-        // ── SEND APPROVAL EMAIL ───────────────────────────────
         if (!empty($u['email'])) {
             $msg = "Dear {$u['name']},
 

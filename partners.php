@@ -5,7 +5,7 @@ require_once 'includes/db.php';
 
 $success = ''; $error = '';
 
-// ── HANDLERS (admin only) ────────────────────────────────────
+// HANDLERS (admin only)
 if ($_SERVER['REQUEST_METHOD']==='POST' && is_admin()) {
     $form = $_POST['form'] ?? '';
 
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && is_admin()) {
     }
 }
 
-// ── FETCH ─────────────────────────────────────────────────────
+// FETCH
 $search = trim($_GET['q']??'');
 $filter_status = $_GET['status']??'';
 
@@ -39,12 +39,6 @@ $where = '1=1';
 $params = [];
 if ($search) { $where .= ' AND c.name LIKE ?'; $params[] = "%{$search}%"; }
 if ($filter_status) { $where .= ' AND c.status=?'; $params[] = $filter_status; }
-
-// Data isolation:
-// - Company users: see ONLY their own partner record
-// - School users: see ALL partners (they need to find/identify partners,
-//   but their own school data isolation happens in schools.php)
-// - Admin: sees everything
 if (!is_admin() && ($_SESSION['user_type']??'') === 'company' && isset($_SESSION['linked_id'])) {
     $where .= ' AND c.id=?'; $params[] = (int)$_SESSION['linked_id'];
 }

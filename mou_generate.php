@@ -1,7 +1,6 @@
 <?php
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
-// Allow admin and company users who own the pledge
 if (!is_admin() && ($_SESSION['user_type']??'') !== 'company') {
     redirect('dashboard.php');
 }

@@ -107,6 +107,29 @@ include 'includes/header.php';
   <span class="active-crumb">School Needs</span>
 </div>
 
+<?php if(!is_admin() && ($_SESSION['user_type']??'')==='school'): ?>
+<div style="background:linear-gradient(135deg,#0d1e3d,#1a3560);border-radius:12px;padding:16px 20px;
+            margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:11px">
+    <div style="width:38px;height:38px;border-radius:9px;background:var(--teal);
+                display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <i class="ti ti-clipboard-list" style="font-size:18px;color:white"></i>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:white;margin-bottom:2px">
+        Post needs based on your surveys
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5)">
+        Complete your Needs Assessment survey first to identify your school's priorities, then post them here.
+      </div>
+    </div>
+  </div>
+  <a href="surveys.php" class="btn" style="background:var(--teal);color:white;padding:9px 18px;font-size:12.5px;flex-shrink:0">
+    <i class="ti ti-forms"></i> Go to Surveys
+  </a>
+</div>
+<?php endif; ?>
+
 <div class="page-header">
   <div>
     <h1><?= $is_school ? 'My School\'s Needs' : ($is_company ? 'Schools Seeking Funding' : 'School Needs Board') ?></h1>
@@ -238,8 +261,8 @@ $total_funded = array_sum(array_column($needs,'amount_funded'));
           <span style="font-weight:700;color:<?= $pct>=100?'var(--teal)':'var(--orange)' ?>"><?= $pct ?>%</span>
         </div>
         <div style="height:7px;background:var(--border);border-radius:7px;overflow:hidden">
-          <div style="height:100%;width:<?= $pct ?>%;border-radius:7px;
-                      background:<?= $pct>=100?'var(--teal)':'linear-gradient(90deg,var(--orange),var(--orange-mid))' ?>;
+          <?php $bar_bg = $pct>=100 ? 'var(--teal)' : 'linear-gradient(90deg,var(--orange),var(--orange-mid))'; ?>
+          <div style="height:100%;width:<?= $pct ?>%;border-radius:7px;background:<?= $bar_bg ?>;transition:width .4s"></div>
                       transition:width .4s"></div>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:4px">

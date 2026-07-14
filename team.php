@@ -22,7 +22,7 @@ $team = array_merge(
 $add_error   = '';
 $add_success = '';
 
-// ── HANDLE ADD MEMBER ────────────────────────────────────────
+// HANDLE ADD MEMBER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_member') {
     $new_name  = trim($_POST['new_name'] ?? '');
     $new_user  = strtolower(trim($_POST['new_username'] ?? ''));
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_mem
     }
 }
 
-// ── HANDLE REMOVE MEMBER ─────────────────────────────────────
+// HANDLE REMOVE MEMBER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'remove_member') {
     $del_user = $_POST['del_username'] ?? '';
     if ($del_user !== 'admin' && isset($saved_admins[$del_user])) {
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'remove_
     }
 }
 
-// ── HANDLE EDIT TEAM MEMBER ───────────────────────────────────
+// HANDLE EDIT TEAM MEMBER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'edit_member') {
     $edit_user  = $_POST['edit_username'] ?? '';
     $edit_name  = trim($_POST['edit_name'] ?? '');
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'edit_me
     }
 }
 
-// ── HANDLE EDIT APPROVED USER ─────────────────────────────────
+// HANDLE EDIT APPROVED USER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'edit_user') {
     $edit_uname = $_POST['edit_uname'] ?? '';
     $edit_name  = trim($_POST['edit_uname_name'] ?? '');
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'edit_us
     }
 }
 
-// ── HANDLE REMOVE APPROVED USER ───────────────────────────────
+// HANDLE REMOVE APPROVED USER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'remove_user') {
     $del_uname = $_POST['del_uname'] ?? '';
     if (isset($pending[$del_uname])) {

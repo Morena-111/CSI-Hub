@@ -157,19 +157,7 @@ $file_icons = [
       <p>MOUs, reports, proposals and programme files</p>
     </div>
     <div class="page-header-right">
-    <a href="document_wizard.php" class="btn btn-primary"><i class="ti ti-upload"></i> Upload Document</a>
-      <?php if(!is_admin()): ?>
-      <a href="document_wizard.php" class="btn btn-primary">
-        <i class="ti ti-checklist"></i> Submit Required Documents
-      </a>
-      <button class="btn btn-secondary" onclick="openModal('upload-modal')">
-        <i class="ti ti-upload"></i> Quick Upload
-      </button>
-      <?php else: ?>
-      <div style="display:inline-flex;align-items:center;gap:7px;background:var(--teal-soft);border:1px solid #a7e9d3;border-radius:9px;padding:8px 16px;font-size:12.5px;font-weight:600;color:#00956a">
-        <i class="ti ti-eye" style="font-size:15px"></i> Review Mode — users submit documents here
-      </div>
-      <?php endif; ?>
+      <a href="document_wizard.php" class="btn btn-primary"><i class="ti ti-upload"></i> Upload Document</a>
     </div>
   </div>
 

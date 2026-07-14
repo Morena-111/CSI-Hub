@@ -4,7 +4,7 @@ require_once 'includes/auth.php';
 require_once 'includes/db.php';
 include 'includes/header.php';
 
-// ── HANDLE ADD ───────────────────────────────────────────────
+// HANDLE ADD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_company' && can_edit()) {
     $name = trim($_POST['name']);
     $initials = strtoupper(substr(explode(' ',$name)[0],0,1).substr(explode(' ',$name)[1]??'',0,1));
@@ -13,20 +13,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_com
     header('Location: companies.php?success=added'); exit;
 }
 
-// ── HANDLE DELETE ────────────────────────────────────────────
+//  HANDLE DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'delete_company' && is_admin()) {
     $pdo->prepare("DELETE FROM companies WHERE id=?")->execute([$_POST['company_id']]);
     header('Location: companies.php?success=deleted'); exit;
 }
 
-// ── HANDLE EDIT ──────────────────────────────────────────────
+//  HANDLE EDIT 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'edit_company' && can_edit()) {
     $pdo->prepare("UPDATE companies SET name=?, sector=?, status=?, since_year=? WHERE id=?")
         ->execute([trim($_POST['name']), $_POST['programme'] ?? '', $_POST['programme'] ?? '', $_POST['status'], $_POST['focus_year'] ?: null, $_POST['company_id']]);
     header('Location: companies.php?success=updated'); exit;
 }
 
-// ── FETCH ─────────────────────────────────────────────────────
+//  FETCH
 $filter_status = $_GET['status'] ?? '';
 $search        = $_GET['q']      ?? '';
 

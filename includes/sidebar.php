@@ -34,7 +34,6 @@ $nav = [];
 // ── OVERVIEW ────────────────────────────────────────────────
 $nav['OVERVIEW'] = [
     ['key'=>'dashboard', 'icon'=>'ti-layout-dashboard', 'label'=>'Dashboard',    'href'=>'dashboard.php', 'badge'=>null],
-    ['key'=>'impact',    'icon'=>'ti-heart-rate-monitor','label'=>'Impact Stats', 'href'=>'impact_stats.php','badge'=>null],
 ];
 
 // ── MANAGEMENT ──────────────────────────────────────────────

@@ -7,7 +7,7 @@ include 'includes/header.php';
 $success_msg = '';
 $error_msg   = '';
 
-// ── HANDLE ADD ────────────────────────────────────────────────
+// HANDLE ADD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_event' && can_edit()) {
     $pdo->prepare("INSERT INTO events (title, description, event_date, event_time, location, event_type, partnership_id, company_id, school_id, status, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
         ->execute([
@@ -26,19 +26,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_eve
     header('Location: events.php?success=added'); exit;
 }
 
-// ── HANDLE STATUS UPDATE ─────────────────────────────────────
+// HANDLE STATUS UPDATE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'update_event' && can_edit()) {
     $pdo->prepare("UPDATE events SET status=? WHERE id=?")->execute([$_POST['status'], $_POST['event_id']]);
     header('Location: events.php?success=updated'); exit;
 }
 
-// ── HANDLE DELETE ─────────────────────────────────────────────
+// HANDLE DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'delete_event' && is_admin()) {
     $pdo->prepare("DELETE FROM events WHERE id=?")->execute([$_POST['event_id']]);
     header('Location: events.php?success=deleted'); exit;
 }
 
-// ── FETCH DATA ────────────────────────────────────────────────
+// FETCH DATA
 $filter = $_GET['filter'] ?? 'upcoming';
 
 $status_filter = $filter === 'all' ? '' : "WHERE e.status = 'upcoming'";

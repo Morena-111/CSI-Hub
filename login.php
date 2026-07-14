@@ -47,7 +47,7 @@ function norm_phone(string $p): string {
     return substr($digits, -9); // last 9 digits = the significant local number
 }
 
-// ── FORGOT PASSWORD — step 1: verify identity, send OTP ────────
+// FORGOT PASSWORD — step 1: verify identity, send OTP
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'forgot_request') {
     $fu       = strtolower(trim($_POST['forgot_username'] ?? ''));
     $fcontact = trim($_POST['forgot_contact'] ?? '');
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'forgot_
     $awaiting_otp = $fu;
 }
 
-// ── FORGOT PASSWORD — step 2: verify OTP + set new password ────
+// FORGOT PASSWORD — step 2: verify OTP + set new password
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'reset_password') {
     $ru    = strtolower(trim($_POST['reset_username'] ?? ''));
     $rotp  = trim($_POST['otp'] ?? '');
@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'reset_p
     }
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────
+// LOGIN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'login') {
     $u_typed = trim($_POST['username'] ?? '');
     $u = strtolower($u_typed); // accounts are stored/keyed lowercase — login matches regardless of case
@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'login')
     $active_tab = 'login';
 }
 
-// ── SIGNUP ────────────────────────────────────────────────────
+// SIGNUP
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'signup') {
     $utype  = $_POST['user_type'] ?? '';
     $suser_typed = trim($_POST['username'] ?? '');

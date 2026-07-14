@@ -22,6 +22,17 @@ $co_quarters     = ['Q1'=>0,'Q2'=>0,'Q3'=>0,'Q4'=>0];
 $sc_stats        = [];
 $sc_needs        = [];
 $sc_partners     = [];
+$impact_rows     = [];
+$impact_totals   = ['learners'=>0,'educators'=>0,'schools'=>0];
+$milestones      = [];
+$co_impact       = [];
+$sc_impact       = [];
+$q_data          = [
+    'Q1'=>['learners'=>0,'educators'=>0],
+    'Q2'=>['learners'=>0,'educators'=>0],
+    'Q3'=>['learners'=>0,'educators'=>0],
+    'Q4'=>['learners'=>0,'educators'=>0],
+];
 
 // ── ADMIN STATS ───────────────────────────────────────────────
 if ($is_admin) {
@@ -72,6 +83,65 @@ if ($is_admin) {
     $pending_signups = file_exists($signups_file)
         ? array_filter(json_decode(file_get_contents($signups_file),true)??[], fn($v)=>!($v['approved']??false))
         : [];
+
+    // ── IMPACT DATA for admin dashboard ──────────────────────
+    $impact_rows = $pdo->query("
+        SELECT i.*, p.focus_area, p.amount,
+               s.name AS school_name, s.province,
+               c.name AS company_name
+        FROM impact_stats i
+        JOIN partnerships p ON p.id=i.partnership_id
+        JOIN schools s ON s.id=p.school_id
+        JOIN companies c ON c.id=p.company_id
+        WHERE i.year=$year_sel
+        ORDER BY i.quarter DESC, s.name
+    ")->fetchAll();
+    $impact_totals = [
+        'learners'   => array_sum(array_column($impact_rows,'learners')),
+        'educators'  => array_sum(array_column($impact_rows,'educators')),
+        'schools'    => count(array_unique(array_column($impact_rows,'school_name'))),
+    ];
+    $q_data = [];
+    foreach(['Q1','Q2','Q3','Q4'] as $q) {
+        $rows = array_filter($impact_rows, fn($r)=>$r['quarter']===$q);
+        $q_data[$q] = [
+            'learners'  => array_sum(array_column(array_values($rows),'learners')),
+            'educators' => array_sum(array_column(array_values($rows),'educators')),
+        ];
+    }
+    $milestones = $pdo->query("
+        SELECT m.*, s.name AS school_name, p.focus_area
+        FROM impact_milestones m
+        JOIN partnerships p ON p.id=m.partnership_id
+        JOIN schools s ON s.id=m.school_id
+        WHERE m.year=$year_sel
+        ORDER BY m.status, m.due_date ASC LIMIT 5
+    ")->fetchAll();
+}
+
+// ── COMPANY IMPACT DATA ───────────────────────────────────────
+$co_impact = []; $sc_impact = [];
+if ($is_company && $linked_id) {
+    $ci = $pdo->prepare("
+        SELECT i.*, s.name AS school_name, i.quarter
+        FROM impact_stats i
+        JOIN partnerships p ON p.id=i.partnership_id
+        JOIN schools s ON s.id=p.school_id
+        WHERE p.company_id=? AND i.year=?
+        ORDER BY i.quarter DESC
+    "); $ci->execute([$linked_id, $year_sel]);
+    $co_impact = $ci->fetchAll();
+}
+if ($is_school && $linked_id) {
+    $si = $pdo->prepare("
+        SELECT i.*, c.name AS company_name, i.quarter
+        FROM impact_stats i
+        JOIN partnerships p ON p.id=i.partnership_id
+        JOIN companies c ON c.id=p.company_id
+        WHERE p.school_id=? AND i.year=?
+        ORDER BY i.quarter DESC
+    "); $si->execute([$linked_id, $year_sel]);
+    $sc_impact = $si->fetchAll();
 }
 
 // ── COMPANY DASHBOARD ─────────────────────────────────────────
@@ -246,6 +316,129 @@ include 'includes/header.php';
   </div>
 </div>
 
+<!-- ══ IMPACT STATS — FULLY MERGED ══ -->
+<div class="widget" style="margin-bottom:20px">
+  <div class="widget-title">
+    <i class="ti ti-chart-bar" style="color:var(--orange)"></i>
+    Impact Statistics — <?= $year_sel ?>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <?php foreach([date('Y'),date('Y')-1] as $yr): ?>
+      <a href="?year=<?= $yr ?>" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;
+         text-decoration:none;background:<?= $yr==$year_sel?'var(--orange)':'var(--surface)' ?>;
+         color:<?= $yr==$year_sel?'#fff':'var(--text)' ?>"><?= $yr ?></a>
+      <?php endforeach; ?>
+      <a href="export_report_pdf.php?year=<?= $year_sel ?>" style="font-size:11px;color:var(--orange);font-weight:600;text-decoration:none;margin-left:4px">
+        <i class="ti ti-download"></i> PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Stats -->
+  <div class="stats-row" style="margin-bottom:18px">
+    <?php foreach([
+      ['Learners Reached',  number_format($impact_totals['learners']??0),  'var(--orange)', 'ti-users'],
+      ['Educators Reached', number_format($impact_totals['educators']??0), 'var(--teal)',   'ti-user-check'],
+      ['Schools Reached',   $impact_totals['schools']??0,                  '#6c5ce7',       'ti-school'],
+      ['Programmes',        count(array_unique(array_column($impact_rows,'partnership_id'))), 'var(--gold)', 'ti-activity'],
+    ] as [$l,$v,$c,$ic]): ?>
+    <div class="stat-card" style="flex:1;min-width:120px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="stat-label"><?= $l ?></div>
+        <i class="ti <?= $ic ?>" style="font-size:16px;color:<?= $c ?>;opacity:.6"></i>
+      </div>
+      <div class="stat-value" style="color:<?= $c ?>"><?= $v ?></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Q1-Q4 Breakdown -->
+  <?php
+  $qcols = ['Q1'=>'var(--orange)','Q2'=>'var(--teal)','Q3'=>'#6c5ce7','Q4'=>'var(--gold)'];
+  $max_q = max(array_map(fn($d)=>$d['learners'], $q_data ?: [['learners'=>1]])) ?: 1;
+  ?>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+    <?php foreach(['Q1','Q2','Q3','Q4'] as $qn):
+      $qd = $q_data[$qn]??['learners'=>0,'educators'=>0];
+      $pct = $max_q > 0 ? round($qd['learners']/$max_q*100) : 0;
+    ?>
+    <div style="background:var(--surface);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:10px;font-weight:700;color:<?= $qcols[$qn] ?>;text-transform:uppercase;
+                  letter-spacing:.08em;margin-bottom:8px"><?= $qn ?></div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);font-family:'Playfair Display',serif">
+        <?= number_format($qd['learners']) ?>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">learners</div>
+      <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:<?= $pct ?>%;background:<?= $qcols[$qn] ?>;border-radius:4px"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:5px"><?= number_format($qd['educators']) ?> educators</div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Impact Records Table -->
+  <?php if(!empty($impact_rows)): ?>
+  <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead>
+        <tr><th>School</th><th>Company</th><th>Quarter</th><th>Learners</th><th>Educators</th><th>Investment</th></tr>
+      </thead>
+      <tbody>
+      <?php foreach(array_slice($impact_rows,0,8) as $r): ?>
+      <tr>
+        <td style="font-weight:600"><?= htmlspecialchars($r['school_name']) ?></td>
+        <td style="font-size:12px"><?= htmlspecialchars($r['company_name']) ?></td>
+        <td><span style="font-weight:700;color:<?= $qcols[$r['quarter']??'Q1']??'var(--orange)' ?>"><?= $r['quarter']??'—' ?></span></td>
+        <td style="font-weight:600;color:var(--orange)"><?= number_format($r['learners']) ?></td>
+        <td style="font-weight:600;color:var(--teal)"><?= number_format($r['educators']) ?></td>
+        <td>R<?= number_format($r['amount']) ?></td>
+      </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    <?php if(count($impact_rows)>8): ?>
+    <div style="text-align:center;padding:10px">
+      <a href="impact_stats.php" style="font-size:12px;color:var(--orange);font-weight:600;text-decoration:none">
+        View all <?= count($impact_rows) ?> records →
+      </a>
+    </div>
+    <?php endif; ?>
+  </div>
+  <?php else: ?>
+  <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">
+    No impact records for <?= $year_sel ?>. <a href="impact_stats.php" style="color:var(--orange)">Add records →</a>
+  </div>
+  <?php endif; ?>
+
+  <!-- Milestones -->
+  <?php if(!empty($milestones)): ?>
+  <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">
+      Programme Milestones
+    </div>
+    <?php foreach($milestones as $m):
+      $mc = ['not_started'=>'var(--text-muted)','in_progress'=>'var(--orange)','achieved'=>'var(--teal)','exceeded'=>'#00956a'][$m['status']]??'var(--text-muted)';
+      $mpct = $m['target_value']>0?min(100,round($m['achieved_value']/$m['target_value']*100)):0;
+    ?>
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <i class="ti ti-flag" style="color:<?= $mc ?>;font-size:14px;flex-shrink:0"></i>
+      <div style="flex:1">
+        <div style="font-size:12.5px;font-weight:600;color:var(--text)"><?= htmlspecialchars($m['title']) ?></div>
+        <div style="font-size:11px;color:var(--text-muted)"><?= htmlspecialchars($m['school_name']) ?> · <?= htmlspecialchars($m['focus_area']) ?></div>
+        <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:5px;width:200px">
+          <div style="height:100%;width:<?= $mpct ?>%;background:<?= $mc ?>;border-radius:4px"></div>
+        </div>
+      </div>
+      <span style="font-size:10.5px;font-weight:700;color:<?= $mc ?>"><?= $mpct ?>%</span>
+      <span style="font-size:10px;background:var(--surface);padding:2px 8px;border-radius:8px;color:var(--text-muted)">
+        <?= ucfirst(str_replace('_',' ',$m['status'])) ?>
+      </span>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+</div>
+
 <!-- Recent Activity -->
 <div class="widget">
   <div class="widget-title"><i class="ti ti-activity"></i> Recent Activity</div>
@@ -320,7 +513,7 @@ include 'includes/header.php';
   <div class="widget">
     <div class="widget-title"><i class="ti ti-activity"></i> Active Programmes</div>
     <?php if(empty($co_partnerships)): ?>
-    <p style="font-size:12.5px;color:var(--text-muted);text-align:center;padding:20px">No programmes yet. <a href="browse_schools.php" style="color:var(--orange)">Browse schools →</a></p>
+    <p style="font-size:12.5px;color:var(--text-muted);text-align:center;padding:20px">No programmes yet. <a href="schools.php" style="color:var(--orange)">View schools →</a></p>
     <?php else: foreach($co_partnerships as $cp):
       $prog = $cp['status']==='completed'?100:($cp['status']==='pending'?0:(time()>=strtotime($cp['end_date'])?100:round((time()-strtotime($cp['start_date']))/(strtotime($cp['end_date'])-strtotime($cp['start_date']))*100)));
     ?>
@@ -338,10 +531,34 @@ include 'includes/header.php';
   </div>
 </div>
 
-<div style="display:flex;gap:12px;flex-wrap:wrap">
+<!-- Company impact summary -->
+<?php if(!empty($co_impact)): ?>
+<div class="widget" style="margin-top:20px">
+  <div class="widget-title">
+    <i class="ti ti-chart-bar" style="color:var(--orange)"></i> My Impact — <?= $year_sel ?>
+    <a href="impact_stats.php" style="margin-left:auto;font-size:11px;color:var(--orange);font-weight:600;text-decoration:none">Full Report →</a>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>School</th><th>Quarter</th><th>Learners</th><th>Educators</th></tr></thead>
+    <tbody>
+    <?php foreach($co_impact as $ci): ?>
+    <tr>
+      <td style="font-weight:600"><?= htmlspecialchars($ci['school_name']) ?></td>
+      <td><span style="font-weight:700;color:var(--orange)"><?= $ci['quarter']??'—' ?></span></td>
+      <td><?= number_format($ci['learners']) ?></td>
+      <td><?= number_format($ci['educators']) ?></td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
   <a href="schools.php" class="btn btn-primary"><i class="ti ti-school"></i> View Schools</a>
   <a href="programmes.php" class="btn btn-secondary"><i class="ti ti-activity"></i> View Programmes</a>
   <a href="documents.php" class="btn btn-secondary"><i class="ti ti-file"></i> My Documents</a>
+  <a href="impact_stats.php" class="btn btn-secondary"><i class="ti ti-chart-bar"></i> Full Impact Report</a>
 </div>
 
 <!-- ══════════════ SCHOOL DASHBOARD ══════════════ -->
@@ -435,10 +652,34 @@ if (!$survey_done): ?>
   </div>
 </div>
 
-<div style="display:flex;gap:12px;flex-wrap:wrap">
+<!-- School impact summary -->
+<?php if(!empty($sc_impact)): ?>
+<div class="widget" style="margin-top:20px">
+  <div class="widget-title">
+    <i class="ti ti-chart-bar" style="color:var(--teal)"></i> My School Impact — <?= $year_sel ?>
+    <a href="impact_stats.php" style="margin-left:auto;font-size:11px;color:var(--orange);font-weight:600;text-decoration:none">Full Report →</a>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Company</th><th>Quarter</th><th>Learners</th><th>Educators</th></tr></thead>
+    <tbody>
+    <?php foreach($sc_impact as $si): ?>
+    <tr>
+      <td style="font-weight:600"><?= htmlspecialchars($si['company_name']) ?></td>
+      <td><span style="font-weight:700;color:var(--teal)"><?= $si['quarter']??'—' ?></span></td>
+      <td><?= number_format($si['learners']) ?></td>
+      <td><?= number_format($si['educators']) ?></td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
   <a href="school_needs.php" class="btn btn-primary"><i class="ti ti-plus"></i> Post a Need</a>
+  <a href="surveys.php" class="btn btn-secondary"><i class="ti ti-forms"></i> My Surveys</a>
   <a href="documents.php" class="btn btn-secondary"><i class="ti ti-file"></i> My Documents</a>
-  <a href="programmes.php" class="btn btn-secondary"><i class="ti ti-activity"></i> Programmes</a>
+  <a href="impact_stats.php" class="btn btn-secondary"><i class="ti ti-chart-bar"></i> My Impact</a>
 </div>
 
 <?php else: ?>

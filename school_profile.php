@@ -4,12 +4,12 @@ require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
 $id = (int)($_GET['id'] ?? 0);
-if (!$id) redirect('browse_schools.php');
+if (!$id) redirect('schools.php');
 
 // Get school
 $st = $pdo->prepare("SELECT * FROM schools WHERE id=?");
 $st->execute([$id]); $school = $st->fetch();
-if (!$school) redirect('browse_schools.php');
+if (!$school) redirect('schools.php');
 
 // School users can only view their own
 if (!is_admin() && ($_SESSION['user_type']??'')==='school' && (int)($_SESSION['linked_id']??0) !== $id) {

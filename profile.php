@@ -1,5 +1,6 @@
 <?php
-$active_page = '';
+$active_page  = 'profile';
+$profile_org  = ''; // initialized early to silence linter
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 

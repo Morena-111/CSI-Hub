@@ -1,11 +1,6 @@
 <?php
 /**
- * search.php — Global search API
- * Place in: C:\xampp\htdocs\csi-hub\search.php
- *
- * Searches across: Partners, Schools, Partnerships, Documents,
- * Events, Surveys, Team Members, Programmes — respecting the
- * same data isolation rules as the rest of the platform.
+ * search.php
  */
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
@@ -18,7 +13,7 @@ if (strlen($q) < 2) { echo '[]'; exit; }
 $like    = "%{$q}%";
 $results = [];
 
-// ── DATA ISOLATION SCOPE ───────────────────────────────────────
+// DATA ISOLATION SCOPE
 $scope_company = null;
 $scope_school  = null;
 if (!is_admin()) {
@@ -29,9 +24,7 @@ if (!is_admin()) {
     }
 }
 
-// ── PARTNERS ─────────────────────────────────────────────────
-// Company users only see themselves. School/admin see all (schools
-// need to find/identify partners; admin sees everything).
+// PARTNERS
 if (!$scope_school) {
     $sql = "SELECT id, name, status FROM companies WHERE name LIKE ?";
     $params = [$like];
@@ -51,8 +44,7 @@ if (!$scope_school) {
     }
 }
 
-// ── SCHOOLS ──────────────────────────────────────────────────
-// School users only see themselves. Company/admin see all.
+// SCHOOLS
 if (!$scope_company) {
     $sql = "SELECT id, name, province FROM schools WHERE (name LIKE ? OR province LIKE ?)";
     $params = [$like, $like];
@@ -72,7 +64,7 @@ if (!$scope_company) {
     }
 }
 
-// ── PARTNERSHIPS ─────────────────────────────────────────────
+// PARTNERSHIPS
 $sql = "
     SELECT p.id, c.name AS co, s.name AS sc, p.focus_area, p.status
     FROM partnerships p
@@ -97,7 +89,7 @@ foreach ($st->fetchAll() as $r) {
     ];
 }
 
-// ── DOCUMENTS ────────────────────────────────────────────────
+// DOCUMENTS
 $st = $pdo->prepare("SELECT id, title, category FROM documents WHERE title LIKE ? OR category LIKE ? LIMIT 5");
 $st->execute([$like, $like]);
 foreach ($st->fetchAll() as $r) {
@@ -111,7 +103,7 @@ foreach ($st->fetchAll() as $r) {
     ];
 }
 
-// ── EVENTS ───────────────────────────────────────────────────
+// EVENTS
 $st = $pdo->prepare("SELECT id, title, event_date, event_type FROM events WHERE title LIKE ? LIMIT 4");
 $st->execute([$like]);
 foreach ($st->fetchAll() as $r) {
@@ -125,7 +117,7 @@ foreach ($st->fetchAll() as $r) {
     ];
 }
 
-// ── SURVEYS (admin only) ──────────────────────────────────────
+// SURVEYS (admin only)
 if (is_admin()) {
     try {
         $st = $pdo->prepare("SELECT id, title, status FROM surveys WHERE title LIKE ? LIMIT 4");
@@ -143,7 +135,7 @@ if (is_admin()) {
     } catch (Exception $e) { /* surveys table may not exist yet */ }
 }
 
-// ── TEAM MEMBERS (admin only) ─────────────────────────────────
+// TEAM MEMBERS (admin only)
 if (is_admin()) {
     $admins_file = __DIR__ . '/data/admin_users.json';
     $admins = file_exists($admins_file) ? json_decode(file_get_contents($admins_file), true) ?? [] : [];
@@ -180,7 +172,7 @@ if (is_admin()) {
     }
 }
 
-// ── PROGRAMMES (static keyword match) ─────────────────────────
+// PROGRAMMES (static keyword match)
 $programme_pages = [
     ['name'=>'We Run It For You', 'kw'=>['run','manage','programme design'], 'icon'=>'ti-rocket'],
     ['name'=>'Buy a Programme Package', 'kw'=>['buy','package','bronze','silver','gold'], 'icon'=>'ti-package'],

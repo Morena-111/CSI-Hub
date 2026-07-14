@@ -5,11 +5,7 @@ require_once 'includes/auth.php';
 require_once 'includes/db.php';
 include 'includes/header.php';
 
-// ── PARTNER FILTER MODE ────────────────────────────────────────
-// When ?partner_id=X is present, this page behaves like the old
-// partner_detail.php: shows only that partner's projects, grouped
-// by school, with the same data-isolation rule (company users can
-// only view their own partner_id).
+// PARTNER FILTER MODE
 $filter_partner_id = (int)($_GET['partner_id'] ?? 0);
 $viewing_partner    = null;
 
@@ -24,7 +20,7 @@ if ($filter_partner_id) {
     if (!$viewing_partner) { redirect('partnerships.php');  }
 }
 
-// ── HANDLE ADD ───────────────────────────────────────────────
+// HANDLE ADD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_partnership' && can_edit()) {
     $pdo->prepare("INSERT INTO partnerships (company_id, school_id, amount, focus_area, start_date, end_date, description, status) VALUES (?,?,?,?,?,?,?,?)")
         ->execute([
@@ -36,19 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'add_par
     header('Location: partnerships.php?success=added'); exit;
 }
 
-// ── HANDLE DELETE ────────────────────────────────────────────
+// HANDLE DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'delete_partnership' && is_admin()) {
     $pdo->prepare("DELETE FROM partnerships WHERE id = ?")->execute([$_POST['partnership_id']]);
     header('Location: partnerships.php?success=deleted'); exit;
 }
 
-// ── HANDLE STATUS UPDATE ─────────────────────────────────────
+// HANDLE STATUS UPDATE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form'] ?? '') === 'update_status' && can_edit()) {
     $pdo->prepare("UPDATE partnerships SET status=? WHERE id=?")->execute([$_POST['status'], $_POST['partnership_id']]);
     header('Location: partnerships.php?success=updated'); exit;
 }
 
-// ── FETCH DATA ───────────────────────────────────────────────
+// FETCH DATA
 $pw_sql = "
     SELECT p.*, c.name AS company_name, c.sector,
            s.name AS school_name, s.province, s.location
