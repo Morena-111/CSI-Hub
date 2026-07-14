@@ -281,12 +281,14 @@ $school_c = count(array_unique(array_column($my_partnerships,'school_id')));
 <!-- Always show the full RU programme catalogue below active partnerships -->
 <?php endif; ?>
 
+
 <!-- ══ ADMIN — PROGRAMME REQUESTS ══ -->
-<?php if(is_admin()):
-// Load enquiry requests from data file
+<?php if(is_admin()): ?>
+<?php
 $req_file = __DIR__.'/data/programme_requests.json';
 $requests = file_exists($req_file) ? json_decode(file_get_contents($req_file),true)??[] : [];
-if(!empty($requests)): ?>
+?>
+<?php if(!empty($requests)): ?>
 <div class="widget" style="margin-bottom:22px">
   <div class="widget-title"><i class="ti ti-inbox" style="color:var(--orange)"></i>
     Programme Requests
@@ -312,6 +314,7 @@ if(!empty($requests)): ?>
     </tbody>
   </table>
 </div>
+<?php endif; ?>
 <?php endif; ?>
 
 <!-- ══ FULL PROGRAMME CATALOGUE — shown to all users ══ -->
